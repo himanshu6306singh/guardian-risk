@@ -2,6 +2,9 @@ export { Guardian } from './engine/Guardian.js';
 export { RiskEngine } from './engine/RiskEngine.js';
 export type { RiskEngineDependencies } from './engine/RiskEngine.js';
 
+export type { Plugin } from './plugins/Plugin.js';
+export { PluginRegistry, PluginAlreadyInstalledError } from './plugins/PluginRegistry.js';
+
 export { SignalStore } from './signals/SignalStore.js';
 
 export { RuleBuilder } from './rules/RuleBuilder.js';

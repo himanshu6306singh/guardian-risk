@@ -36,12 +36,31 @@ console.log(report.score); // 35
 console.log(report.level); // MEDIUM
 ```
 
+## Plugins
+
+```typescript
+import type { Plugin } from 'guardian-risk';
+
+const myPlugin: Plugin = {
+  name: 'my-plugin',
+  install(guardian) {
+    guardian.rule({ name: 'Custom', when: () => true, score: 10 });
+  },
+};
+
+new Guardian().use(myPlugin);
+```
+
 ## API
 
-- `guardian.signal(key, value)` — add a signal
-- `guardian.rule({ name, when, score, reason? })` — register a rule
-- `guardian.analyze()` — run evaluation, returns `RiskReport`
-- `guardian.reset()` — clear signals (rules persist)
+| Method | Description |
+|--------|-------------|
+| `guardian.signal(key, value)` | Add a signal |
+| `guardian.rule({ name, when, score, reason? })` | Register a rule |
+| `guardian.use(plugin)` | Install a plugin (once per name) |
+| `guardian.analyze()` | Run evaluation, returns `RiskReport` |
+| `guardian.reset()` | Clear signals (rules + plugins persist) |
+| `guardian.getInstalledPlugins()` | List installed plugin names |
 
 ## License
 

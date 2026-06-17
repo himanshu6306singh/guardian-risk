@@ -1,7 +1,7 @@
 {
-  "name": "guardian-risk",
-  "version": "0.2.0",
-  "description": "Configurable risk decision engine using signals, rules, and scoring",
+  "name": "guardian-risk-vpn",
+  "version": "0.1.0",
+  "description": "VPN and proxy detection plugin for guardian-risk — adds network risk signals",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -19,33 +19,25 @@
     }
   },
   "sideEffects": false,
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": ["dist", "README.md"],
   "engines": {
     "node": ">=20"
   },
   "scripts": {
     "build": "tsup",
-    "prepublishOnly": "pnpm run build",
-    "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit"
   },
-  "keywords": [
-    "risk",
-    "risk-scoring",
-    "rules-engine",
-    "fraud-detection",
-    "bot-detection",
-    "security",
-    "typescript"
-  ],
+  "keywords": ["guardian-risk", "vpn", "proxy", "tor", "ip", "fraud", "risk"],
   "license": "MIT",
   "publishConfig": {
     "access": "public"
   },
+  "peerDependencies": {
+    "guardian-risk": "workspace:*"
+  },
   "devDependencies": {
+    "guardian-risk": "workspace:*",
     "tsup": "^8.3.5",
-    "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "typescript": "^5.7.2"
   }
 }

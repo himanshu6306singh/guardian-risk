@@ -25,7 +25,7 @@ It is **not** a bot detection library. It is a composable engine — like Zod va
 pnpm add guardian-risk
 ```
 
-> **npm package name:** `guardian-risk` (`@guardianjs/core` is already taken on npm by another project).
+> **npm package name:** `guardian-risk`
 
 ## Quick start
 
@@ -60,7 +60,91 @@ const report = guardian.analyze();
 | **Rules** | Conditions that add risk when matched |
 | **Engine** | Runs every rule against signals |
 | **Report** | Score, level, reasons, and matched rules |
-| **Plugins** | Extra capabilities (coming in v0.2) |
+| **Plugins** | Extend Guardian with signals, rules, or integrations |
+
+## Plugin system (v0.2)
+
+Plugins extend Guardian **without modifying core**. Each plugin implements:
+
+```typescript
+interface Plugin {
+  name: string;
+  install(guardian: Guardian): void;
+}
+```
+
+Register with the fluent API:
+
+```typescript
+import { Guardian } from 'guardian-risk';
+import { expressPlugin } from 'guardian-risk-express';
+
+const guardian = new Guardian()
+  .use(expressPlugin({ trustProxy: true }))
+  .signal('loginAttempts', 5)
+  .rule({
+    name: 'BruteForce',
+    when: (s) => (s.loginAttempts as number) > 3,
+    score: 40,
+  });
+
+guardian.getInstalledPlugins(); // ['guardian-risk-express']
+```
+
+### Plugin rules
+
+- Each plugin `name` can only be installed **once** per `Guardian` instance
+- Plugins may call `guardian.signal()` and `guardian.rule()` inside `install()`
+- Plugins **never** change core engine logic
+- `guardian.reset()` clears signals only — rules and plugins persist
+
+### Official plugins (stubs)
+
+| Package | Status | Purpose |
+|---------|--------|---------|
+| [`guardian-risk`](packages/core) | Published | Core engine |
+| [`guardian-risk-express`](packages/express) | Stub | Express request signals |
+| [`guardian-risk-browser`](packages/browser) | Stub | Mouse, keyboard, fingerprint |
+| [`guardian-risk-redis`](packages/redis) | Stub | Session counters, rate limits |
+| [`guardian-risk-vpn`](packages/vpn) | Stub | VPN, proxy, Tor detection |
+| [`guardian-risk-logger`](packages/logger) | Stub | Audit logs for reports |
+
+### Plugin stack example
+
+```typescript
+import { Guardian } from 'guardian-risk';
+import { expressPlugin } from 'guardian-risk-express';
+import { vpnPlugin, checkIp } from 'guardian-risk-vpn';
+import { loggerPlugin, analyzeAndLog } from 'guardian-risk-logger';
+
+const guardian = new Guardian()
+  .use(expressPlugin({ trustProxy: true }))
+  .use(vpnPlugin({ vpnScore: 20 }))
+  .use(loggerPlugin({ level: 'info', minScore: 0 }));
+
+await checkIp('203.0.113.10', guardian);
+const report = analyzeAndLog(guardian);
+```
+
+### Custom plugin example
+
+```typescript
+import type { Plugin } from 'guardian-risk';
+
+const customPlugin: Plugin = {
+  name: 'my-custom-checks',
+  install(guardian) {
+    guardian.rule({
+      name: 'HighValueTransfer',
+      when: (s) => (s.amount as number) > 10_000,
+      score: 50,
+      reason: 'Transfer exceeds daily limit threshold',
+    });
+  },
+};
+
+new Guardian().use(customPlugin);
+```
 
 ## Scoring
 
@@ -73,18 +157,45 @@ Score is the **sum of all matched rule scores**. Risk levels are configurable:
 | 41–60 | HIGH |
 | 61+ | CRITICAL |
 
+```typescript
+const guardian = new Guardian({
+  levels: [
+    { max: 20, level: 'LOW' },
+    { max: 40, level: 'MEDIUM' },
+    { max: 60, level: 'HIGH' },
+    { max: Infinity, level: 'CRITICAL' },
+  ],
+});
+```
+
+## Monorepo structure
+
+```
+guardian/
+├── packages/
+│   ├── core/       → guardian-risk (npm)
+│   ├── express/    → guardian-risk-express (stub)
+│   ├── browser/    → guardian-risk-browser (stub)
+│   ├── redis/      → guardian-risk-redis (stub)
+│   ├── vpn/        → guardian-risk-vpn (stub)
+│   └── logger/     → guardian-risk-logger (stub)
+└── examples/
+    └── bot-detection/
+```
+
 ## Development
 
 ```bash
 pnpm install
-pnpm build
-pnpm test
+pnpm build          # builds core + plugin stubs
+pnpm test           # core tests
 pnpm lint
+pnpm typecheck
 ```
 
 ## Examples
 
-See [`examples/bot-detection/`](examples/bot-detection/) for a bot-risk scoring example built on top of the core engine.
+- [`examples/bot-detection/`](examples/bot-detection/) — bot risk scoring with custom rules
 
 ## Publishing
 

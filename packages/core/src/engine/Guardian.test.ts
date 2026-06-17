@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { Guardian } from './Guardian.js';
 import { DEFAULT_RISK_LEVELS } from '../constants/defaults.js';
+import { PluginAlreadyInstalledError } from '../plugins/PluginRegistry.js';
+import type { Plugin } from '../plugins/Plugin.js';
 
 describe('Guardian', () => {
   it('provides fluent API for signals, rules, and analysis', () => {
@@ -83,5 +85,50 @@ describe('Guardian', () => {
   it('exposes default risk levels constant', () => {
     expect(DEFAULT_RISK_LEVELS).toHaveLength(4);
     expect(DEFAULT_RISK_LEVELS[0]?.level).toBe('LOW');
+  });
+
+  it('installs plugins via use()', () => {
+    const plugin: Plugin = {
+      name: 'test-plugin',
+      install(guardian) {
+        guardian
+          .rule({ name: 'PluginRule', when: () => true, score: 5 })
+          .signal('fromPlugin', true);
+      },
+    };
+
+    const guardian = new Guardian().use(plugin);
+
+    expect(guardian.getInstalledPlugins()).toEqual(['test-plugin']);
+
+    const report = guardian.analyze();
+    expect(report.score).toBe(5);
+  });
+
+  it('throws when installing the same plugin twice', () => {
+    const plugin: Plugin = {
+      name: 'duplicate',
+      install() {},
+    };
+
+    const guardian = new Guardian().use(plugin);
+
+    expect(() => guardian.use(plugin)).toThrow(PluginAlreadyInstalledError);
+  });
+
+  it('keeps installed plugins after reset()', () => {
+    const plugin: Plugin = {
+      name: 'persistent-plugin',
+      install(guardian) {
+        guardian.rule({ name: 'Persistent', when: () => true, score: 10 });
+      },
+    };
+
+    const guardian = new Guardian().use(plugin);
+    guardian.signal('x', 1).analyze();
+    guardian.reset();
+
+    expect(guardian.getInstalledPlugins()).toEqual(['persistent-plugin']);
+    expect(guardian.analyze().score).toBe(10);
   });
 });

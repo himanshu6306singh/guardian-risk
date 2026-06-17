@@ -8,7 +8,7 @@
   },
   "packageManager": "pnpm@8.15.9",
   "scripts": {
-    "build": "pnpm --filter guardian-risk build",
+    "build": "pnpm --filter guardian-risk build && pnpm --filter \"./packages/{express,browser,redis,vpn,logger}\" build",
     "test": "pnpm --filter guardian-risk test",
     "test:watch": "pnpm --filter guardian-risk test -- --watch",
     "test:coverage": "pnpm --filter guardian-risk test:coverage",
