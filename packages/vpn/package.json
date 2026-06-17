@@ -19,21 +19,31 @@
     }
   },
   "sideEffects": false,
-  "files": ["dist", "README.md"],
+  "files": ["dist", "README.md", "LICENSE"],
   "engines": {
     "node": ">=20"
   },
   "scripts": {
     "build": "tsup",
+    "prepublishOnly": "pnpm run build",
     "typecheck": "tsc --noEmit"
   },
-  "keywords": ["guardian-risk", "vpn", "proxy", "tor", "ip", "fraud", "risk"],
+  "keywords": ["guardian-risk", "guardian-risk-vpn", "vpn", "proxy", "tor", "ip", "fraud", "risk"],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/himanshu6306singh/guardian-risk.git",
+    "directory": "packages/vpn"
+  },
+  "homepage": "https://github.com/himanshu6306singh/guardian-risk/tree/main/packages/vpn#readme",
+  "bugs": {
+    "url": "https://github.com/himanshu6306singh/guardian-risk/issues"
+  },
   "publishConfig": {
     "access": "public"
   },
   "peerDependencies": {
-    "guardian-risk": "workspace:*"
+    "guardian-risk": "^0.2.0"
   },
   "devDependencies": {
     "guardian-risk": "workspace:*",

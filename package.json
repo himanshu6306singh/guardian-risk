@@ -15,6 +15,8 @@
     "lint": "eslint packages/core/src",
     "typecheck": "tsc -b",
     "publish:core": "pnpm --filter guardian-risk publish --access public",
+    "publish:plugins": "pnpm --filter \"./packages/{express,browser,redis,vpn,logger}\" publish --access public",
+    "publish:all": "pnpm publish:core && pnpm publish:plugins",
     "prepublish:check": "pnpm test:coverage && pnpm build && pnpm lint && pnpm typecheck",
     "format": "prettier --write ."
   },

@@ -1,5 +1,11 @@
 # guardian-risk-express
 
+> **Requires:** [`guardian-risk`](https://www.npmjs.com/package/guardian-risk) (core)
+
+```bash
+npm install guardian-risk guardian-risk-express
+```
+
 > **Stub package** — API may change before `1.0.0`.
 
 Express integration for [guardian-risk](https://www.npmjs.com/package/guardian-risk). Reads HTTP request data and adds risk signals.

@@ -31,6 +31,7 @@
     "typecheck": "tsc --noEmit"
   },
   "keywords": [
+    "guardian-risk",
     "risk",
     "risk-scoring",
     "rules-engine",
@@ -40,6 +41,15 @@
     "typescript"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/himanshu6306singh/guardian-risk.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/himanshu6306singh/guardian-risk#readme",
+  "bugs": {
+    "url": "https://github.com/himanshu6306singh/guardian-risk/issues"
+  },
   "publishConfig": {
     "access": "public"
   },

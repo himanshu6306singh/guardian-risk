@@ -19,18 +19,28 @@
     }
   },
   "sideEffects": false,
-  "files": ["dist", "README.md"],
+  "files": ["dist", "README.md", "LICENSE"],
   "scripts": {
     "build": "tsup",
+    "prepublishOnly": "pnpm run build",
     "typecheck": "tsc --noEmit"
   },
-  "keywords": ["guardian-risk", "browser", "fingerprint", "bot-detection", "risk"],
+  "keywords": ["guardian-risk", "guardian-risk-browser", "browser", "fingerprint", "bot-detection", "risk"],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/himanshu6306singh/guardian-risk.git",
+    "directory": "packages/browser"
+  },
+  "homepage": "https://github.com/himanshu6306singh/guardian-risk/tree/main/packages/browser#readme",
+  "bugs": {
+    "url": "https://github.com/himanshu6306singh/guardian-risk/issues"
+  },
   "publishConfig": {
     "access": "public"
   },
   "peerDependencies": {
-    "guardian-risk": "workspace:*"
+    "guardian-risk": "^0.2.0"
   },
   "devDependencies": {
     "guardian-risk": "workspace:*",

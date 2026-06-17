@@ -19,21 +19,31 @@
     }
   },
   "sideEffects": false,
-  "files": ["dist", "README.md"],
+  "files": ["dist", "README.md", "LICENSE"],
   "engines": {
     "node": ">=20"
   },
   "scripts": {
     "build": "tsup",
+    "prepublishOnly": "pnpm run build",
     "typecheck": "tsc --noEmit"
   },
-  "keywords": ["guardian-risk", "express", "middleware", "risk", "security"],
+  "keywords": ["guardian-risk", "guardian-risk-express", "express", "middleware", "risk", "security"],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/himanshu6306singh/guardian-risk.git",
+    "directory": "packages/express"
+  },
+  "homepage": "https://github.com/himanshu6306singh/guardian-risk/tree/main/packages/express#readme",
+  "bugs": {
+    "url": "https://github.com/himanshu6306singh/guardian-risk/issues"
+  },
   "publishConfig": {
     "access": "public"
   },
   "peerDependencies": {
-    "guardian-risk": "workspace:*",
+    "guardian-risk": "^0.2.0",
     "express": ">=4"
   },
   "peerDependenciesMeta": {

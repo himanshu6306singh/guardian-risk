@@ -1,5 +1,11 @@
 # guardian-risk-browser
 
+> **Requires:** [`guardian-risk`](https://www.npmjs.com/package/guardian-risk) (core)
+
+```bash
+npm install guardian-risk guardian-risk-browser
+```
+
 > **Stub package** — API may change before `1.0.0`.
 
 Browser integration for [guardian-risk](https://www.npmjs.com/package/guardian-risk). Collects client-side behavioral and fingerprint signals.

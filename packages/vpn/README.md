@@ -1,5 +1,11 @@
 # guardian-risk-vpn
 
+> **Requires:** [`guardian-risk`](https://www.npmjs.com/package/guardian-risk) (core)
+
+```bash
+npm install guardian-risk guardian-risk-vpn
+```
+
 > **Stub package** — API may change before `1.0.0`.
 
 VPN, proxy, and Tor detection for [guardian-risk](https://www.npmjs.com/package/guardian-risk). Resolves client IP and adds network risk signals.

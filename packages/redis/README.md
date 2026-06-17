@@ -1,5 +1,11 @@
 # guardian-risk-redis
 
+> **Requires:** [`guardian-risk`](https://www.npmjs.com/package/guardian-risk) (core)
+
+```bash
+npm install guardian-risk guardian-risk-redis
+```
+
 > **Stub package** — API may change before `1.0.0`.
 
 Redis integration for [guardian-risk](https://www.npmjs.com/package/guardian-risk). Stores events and exposes session-based counters as signals.

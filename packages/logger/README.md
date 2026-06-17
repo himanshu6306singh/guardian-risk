@@ -1,5 +1,11 @@
 # guardian-risk-logger
 
+> **Requires:** [`guardian-risk`](https://www.npmjs.com/package/guardian-risk) (core)
+
+```bash
+npm install guardian-risk guardian-risk-logger
+```
+
 > **Stub package** — API may change before `1.0.0`.
 
 Audit logging for [guardian-risk](https://www.npmjs.com/package/guardian-risk). Records risk reports, matched rules, and scores for compliance and debugging.

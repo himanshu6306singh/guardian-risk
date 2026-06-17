@@ -1,81 +1,112 @@
 # Publishing to npm
 
-The publishable package is **`guardian-risk`** (`packages/core`).
+## Package ecosystem
 
-> `@guardianjs/core` is already taken on npm by another project. This library publishes as **`guardian-risk`**.
+| Package | Folder | npm page (after publish) |
+|---------|--------|--------------------------|
+| `guardian-risk` | `packages/core` | https://www.npmjs.com/package/guardian-risk |
+| `guardian-risk-express` | `packages/express` | https://www.npmjs.com/package/guardian-risk-express |
+| `guardian-risk-browser` | `packages/browser` | https://www.npmjs.com/package/guardian-risk-browser |
+| `guardian-risk-redis` | `packages/redis` | https://www.npmjs.com/package/guardian-risk-redis |
+| `guardian-risk-vpn` | `packages/vpn` | https://www.npmjs.com/package/guardian-risk-vpn |
+| `guardian-risk-logger` | `packages/logger` | https://www.npmjs.com/package/guardian-risk-logger |
+
+See [ECOSYSTEM.md](./ECOSYSTEM.md) for how users discover and install packages.
 
 ## Prerequisites
 
 1. [npm account](https://www.npmjs.com/signup)
-2. Log in locally:
+2. Log in with token (recommended — no OTP each time):
 
 ```bash
+npm logout
 npm login
+# Username: your-username
+# Password: paste npm_ access token (not your password)
 ```
 
-3. Verify the name is still available:
+Create token: [npmjs.com/settings/~tokens](https://www.npmjs.com/settings/~tokens) → Granular Access Token → Read and write → **Bypass 2FA**
+
+3. Verify login:
 
 ```bash
-npm view guardian-risk
-# Should return 404 before first publish
+npm whoami
 ```
 
 ## Pre-publish checklist
 
 ```bash
 cd /path/to/guardian
-
 pnpm install
-pnpm prepublish:check   # test + build + lint + typecheck
+pnpm prepublish:check
 ```
 
 ## Publish commands
 
-### First publish (from monorepo root)
+### Publish core (do this first)
 
 ```bash
-pnpm --filter guardian-risk publish --access public
+pnpm publish:core --no-git-checks
 ```
 
-Or use the shortcut:
+### Publish all plugins
 
 ```bash
-pnpm publish:core
+pnpm publish:plugins --no-git-checks
 ```
 
-### Bump version and publish
+### Publish everything (core + plugins)
 
 ```bash
-cd packages/core
-npm version patch   # or minor / major
-cd ../..
-pnpm publish:core
+pnpm publish:all --no-git-checks
 ```
 
-### Dry run (see what would be uploaded)
+### Publish one plugin
 
 ```bash
-pnpm --filter guardian-risk publish --dry-run
+pnpm --filter guardian-risk-express publish --access public --no-git-checks
 ```
 
-## What gets published
+### Dry run
 
-Only these files ship to npm (see `packages/core/package.json` `files`):
+```bash
+pnpm --filter guardian-risk-express publish --dry-run --no-git-checks
+```
 
-- `dist/` — built ESM, CJS, and TypeScript declarations
+## Publish order
+
+Always publish **core before plugins** (plugins peer-depend on `guardian-risk ^0.2.0`).
+
+1. `guardian-risk` @ `0.2.0`
+2. All `guardian-risk-*` plugins @ `0.1.0`
+
+## Bump versions
+
+```bash
+cd packages/core && npm version patch && cd ../..
+pnpm publish:core --no-git-checks
+
+cd packages/express && npm version patch && cd ../..
+pnpm --filter guardian-risk-express publish --access public --no-git-checks
+```
+
+## What gets published per package
+
+- `dist/` — built JS + types
 - `README.md`
 - `LICENSE`
 
-Source, tests, and examples stay in the repo only.
+Source and tests stay in the repo only.
 
-## After publish
-
-Users install with:
+## User install examples
 
 ```bash
+# Core only
 npm install guardian-risk
-```
 
-```typescript
-import { Guardian } from 'guardian-risk';
+# Core + Express
+npm install guardian-risk guardian-risk-express
+
+# Stack
+npm install guardian-risk guardian-risk-express guardian-risk-vpn guardian-risk-logger
 ```

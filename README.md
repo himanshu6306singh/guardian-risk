@@ -201,6 +201,8 @@ pnpm typecheck
 
 See [PUBLISHING.md](PUBLISHING.md) for npm publish steps.
 
+See [ECOSYSTEM.md](ECOSYSTEM.md) for how users discover and install all packages.
+
 ## License
 
 MIT
