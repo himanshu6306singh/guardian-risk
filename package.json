@@ -1,0 +1,31 @@
+{
+  "name": "guardian-monorepo",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=8"
+  },
+  "packageManager": "pnpm@8.15.9",
+  "scripts": {
+    "build": "pnpm --filter guardian-risk build",
+    "test": "pnpm --filter guardian-risk test",
+    "test:watch": "pnpm --filter guardian-risk test -- --watch",
+    "test:coverage": "pnpm --filter guardian-risk test:coverage",
+    "lint": "eslint packages/core/src",
+    "typecheck": "tsc -b",
+    "publish:core": "pnpm --filter guardian-risk publish --access public",
+    "prepublish:check": "pnpm test:coverage && pnpm build && pnpm lint && pnpm typecheck",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@types/node": "^25.9.3",
+    "@vitest/coverage-v8": "^2.1.8",
+    "eslint": "^9.17.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.1",
+    "vitest": "^2.1.8"
+  }
+}
