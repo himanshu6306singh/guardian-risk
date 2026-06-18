@@ -14,8 +14,8 @@
     "test:coverage": "pnpm --filter guardian-risk test:coverage",
     "lint": "eslint packages/core/src",
     "typecheck": "tsc -b",
-    "publish:core": "pnpm --filter guardian-risk publish --access public",
-    "publish:plugins": "pnpm --filter \"./packages/{express,browser,redis,vpn,logger}\" publish --access public",
+    "publish:core": "pnpm --filter guardian-risk publish --access public --no-git-checks",
+    "publish:plugins": "pnpm --filter \"./packages/{express,browser,redis,vpn,logger}\" publish --access public --no-git-checks",
     "publish:all": "pnpm publish:core && pnpm publish:plugins",
     "prepublish:check": "pnpm audit --audit-level moderate && pnpm test:coverage && pnpm build && pnpm lint && pnpm typecheck",
     "format": "prettier --write ."

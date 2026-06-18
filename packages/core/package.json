@@ -61,8 +61,7 @@
   "security": "https://github.com/himanshu6306singh/guardian-risk/security/policy",
   "funding": "https://github.com/sponsors/himanshu6306singh",
   "publishConfig": {
-    "access": "public",
-    "provenance": true
+    "access": "public"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.9",
