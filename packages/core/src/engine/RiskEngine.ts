@@ -1,4 +1,5 @@
 import { DEFAULT_RISK_LEVELS } from '../constants/defaults.js';
+import { MAX_RULES } from '../constants/security.js';
 import { ReportBuilder } from '../report/Report.js';
 import { RuleEvaluator } from '../rules/RuleEvaluator.js';
 import { ScoreCalculator } from '../score/ScoreCalculator.js';
@@ -33,6 +34,9 @@ export class RiskEngine {
    * Register a rule for evaluation.
    */
   addRule(rule: Rule<SignalMap>): void {
+    if (this.rules.length >= MAX_RULES) {
+      throw new RangeError(`Cannot exceed maximum of ${MAX_RULES} rules`);
+    }
     this.rules.push(rule);
   }
 

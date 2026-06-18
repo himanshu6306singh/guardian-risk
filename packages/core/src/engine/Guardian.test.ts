@@ -116,6 +116,10 @@ describe('Guardian', () => {
     expect(() => guardian.use(plugin)).toThrow(PluginAlreadyInstalledError);
   });
 
+  it('rejects invalid custom risk levels', () => {
+    expect(() => new Guardian({ levels: [] })).toThrow(TypeError);
+  });
+
   it('keeps installed plugins after reset()', () => {
     const plugin: Plugin = {
       name: 'persistent-plugin',

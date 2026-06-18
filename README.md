@@ -203,6 +203,17 @@ See [PUBLISHING.md](PUBLISHING.md) for npm publish steps.
 
 See [ECOSYSTEM.md](ECOSYSTEM.md) for how users discover and install all packages.
 
+## Security
+
+- **Zero runtime dependencies** — nothing installed with the package
+- **No install scripts** — no code runs on `npm install`
+- Prototype pollution protection on signal keys
+- Rule `when()` and plugin `install()` errors isolated
+- Score bounds and resource limits (see [SECURITY.md](SECURITY.md))
+- CI runs `pnpm audit` on every push; Dependabot enabled
+
+Report vulnerabilities privately via [GitHub Security Advisories](https://github.com/himanshu6306singh/guardian-risk/security/advisories/new).
+
 ## License
 
 MIT

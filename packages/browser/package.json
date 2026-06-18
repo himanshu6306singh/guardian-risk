@@ -1,6 +1,6 @@
 {
   "name": "guardian-risk-browser",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Browser plugin for guardian-risk — collects behavioral and fingerprint signals",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -19,13 +19,24 @@
     }
   },
   "sideEffects": false,
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist/index.js",
+    "dist/index.cjs",
+    "dist/index.d.ts",
+    "dist/index.d.cts",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "tsup",
     "prepublishOnly": "pnpm run build",
     "typecheck": "tsc --noEmit"
   },
   "keywords": ["guardian-risk", "guardian-risk-browser", "browser", "fingerprint", "bot-detection", "risk"],
+  "author": "himanshuusinghh",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -36,8 +47,10 @@
   "bugs": {
     "url": "https://github.com/himanshu6306singh/guardian-risk/issues"
   },
+  "security": "https://github.com/himanshu6306singh/guardian-risk/security/policy",
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "provenance": true
   },
   "peerDependencies": {
     "guardian-risk": "^0.2.0"

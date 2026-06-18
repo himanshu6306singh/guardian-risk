@@ -94,6 +94,16 @@ new Guardian().use(myPlugin);
 | `guardian.reset()` | Clear signals (rules + plugins persist) |
 | `guardian.getInstalledPlugins()` | List installed plugin names |
 
+## Security
+
+- **Zero runtime dependencies** — minimal supply chain risk
+- **No install scripts** — nothing runs on `npm install`
+- Prototype pollution protection on signal keys
+- Rule `when()` errors isolated — engine stays stable
+- Score bounds: ±10,000 per rule, ±1,000,000 total
+- Plugin `install()` failures throw `PluginInstallError` without registering
+- See [SECURITY.md](SECURITY.md) for vulnerability reporting
+
 ## Links
 
 - [GitHub monorepo](https://github.com/himanshu6306singh/guardian-risk)

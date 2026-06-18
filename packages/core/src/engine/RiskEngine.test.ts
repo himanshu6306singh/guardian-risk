@@ -6,6 +6,7 @@ import { ScoreCalculator } from '../score/ScoreCalculator.js';
 import { ReportBuilder } from '../report/Report.js';
 import { RuleBuilder } from '../rules/RuleBuilder.js';
 import { DEFAULT_RISK_LEVELS } from '../constants/defaults.js';
+import { MAX_RULES } from '../constants/security.js';
 
 function createEngine(): RiskEngine {
   const signalStore = new SignalStore();
@@ -75,5 +76,20 @@ describe('RiskEngine', () => {
     const rule = RuleBuilder.create({ name: 'R1', when: () => true, score: 10 });
     engine.addRule(rule);
     expect(engine.getRules()).toHaveLength(1);
+  });
+
+  it('rejects exceeding max rules', () => {
+    const engine = createEngine();
+    for (let i = 0; i < MAX_RULES; i++) {
+      engine.addRule(
+        RuleBuilder.create({ name: `Rule${i}`, when: () => false, score: 1 }),
+      );
+    }
+
+    expect(() =>
+      engine.addRule(
+        RuleBuilder.create({ name: 'Overflow', when: () => false, score: 1 }),
+      ),
+    ).toThrow(RangeError);
   });
 });

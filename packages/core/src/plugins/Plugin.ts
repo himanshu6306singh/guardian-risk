@@ -8,3 +8,6 @@ export interface Plugin {
   readonly name: string;
   install(guardian: Guardian): void;
 }
+
+/** Public alias for {@link Plugin}. */
+export type GuardianPlugin = Plugin;

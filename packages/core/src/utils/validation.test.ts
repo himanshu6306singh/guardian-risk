@@ -1,7 +1,15 @@
 import { describe, it, expect } from 'vitest';
-import { validateSignalValue } from './validation.js';
+import {
+  validateSignalValue,
+  validateSignalKey,
+  validateRuleInput,
+  validatePlugin,
+  validateRiskLevels,
+} from './validation.js';
 import { resolveLevel } from './resolveLevel.js';
 import { DEFAULT_RISK_LEVELS } from '../constants/defaults.js';
+import { RuleEvaluator } from '../rules/RuleEvaluator.js';
+import { RuleBuilder } from '../rules/RuleBuilder.js';
 
 describe('validateSignalValue', () => {
   it('accepts primitives and null', () => {
@@ -16,6 +24,137 @@ describe('validateSignalValue', () => {
     expect(validateSignalValue({})).toBe(false);
     expect(validateSignalValue([])).toBe(false);
     expect(validateSignalValue(undefined)).toBe(false);
+  });
+});
+
+describe('validateSignalKey', () => {
+  it('rejects empty keys', () => {
+    expect(() => validateSignalKey('')).toThrow(TypeError);
+  });
+
+  it('rejects prototype pollution keys', () => {
+    expect(() => validateSignalKey('__proto__')).toThrow(TypeError);
+    expect(() => validateSignalKey('constructor')).toThrow(TypeError);
+    expect(() => validateSignalKey('prototype')).toThrow(TypeError);
+  });
+
+  it('rejects keys exceeding max length', () => {
+    expect(() => validateSignalKey('a'.repeat(300))).toThrow(TypeError);
+  });
+});
+
+describe('validateRuleInput', () => {
+  it('rejects invalid rule definitions', () => {
+    expect(() =>
+      validateRuleInput({ name: '', when: () => true, score: 1 }),
+    ).toThrow(TypeError);
+    expect(() =>
+      validateRuleInput({ name: 'x', when: 'bad' as never, score: 1 }),
+    ).toThrow(TypeError);
+    expect(() =>
+      validateRuleInput({ name: 'x', when: () => true, score: NaN }),
+    ).toThrow(TypeError);
+  });
+
+  it('rejects scores outside safe bounds', () => {
+    expect(() =>
+      validateRuleInput({ name: 'x', when: () => true, score: 20_000 }),
+    ).toThrow(TypeError);
+  });
+
+  it('rejects oversized reason strings', () => {
+    expect(() =>
+      validateRuleInput({
+        name: 'x',
+        when: () => true,
+        score: 1,
+        reason: 'a'.repeat(300),
+      }),
+    ).toThrow(TypeError);
+  });
+
+  it('rejects non-string reason and description', () => {
+    expect(() =>
+      validateRuleInput({
+        name: 'x',
+        when: () => true,
+        score: 1,
+        reason: 1 as never,
+      }),
+    ).toThrow(TypeError);
+    expect(() =>
+      validateRuleInput({
+        name: 'x',
+        when: () => true,
+        score: 1,
+        description: false as never,
+      }),
+    ).toThrow(TypeError);
+  });
+
+  it('rejects oversized rule names and descriptions', () => {
+    expect(() =>
+      validateRuleInput({
+        name: 'a'.repeat(300),
+        when: () => true,
+        score: 1,
+      }),
+    ).toThrow(TypeError);
+    expect(() =>
+      validateRuleInput({
+        name: 'x',
+        when: () => true,
+        score: 1,
+        description: 'a'.repeat(300),
+      }),
+    ).toThrow(TypeError);
+  });
+});
+
+describe('validatePlugin', () => {
+  it('rejects invalid plugins', () => {
+    expect(() => validatePlugin({ name: '', install: () => {} })).toThrow(TypeError);
+    expect(() => validatePlugin({ name: 'ok', install: 'bad' as never })).toThrow(TypeError);
+  });
+
+  it('rejects oversized plugin names', () => {
+    expect(() =>
+      validatePlugin({ name: 'a'.repeat(300), install: () => {} }),
+    ).toThrow(TypeError);
+  });
+});
+
+describe('validateRiskLevels', () => {
+  it('rejects empty thresholds', () => {
+    expect(() => validateRiskLevels([])).toThrow(TypeError);
+  });
+
+  it('rejects invalid threshold fields', () => {
+    expect(() => validateRiskLevels([{ max: 10, level: '' }])).toThrow(TypeError);
+    expect(() => validateRiskLevels([{ max: NaN, level: 'LOW' }])).toThrow(TypeError);
+  });
+
+  it('allows Infinity as max threshold', () => {
+    expect(() =>
+      validateRiskLevels([{ max: Infinity, level: 'CRITICAL' }]),
+    ).not.toThrow();
+  });
+});
+
+describe('RuleEvaluator security', () => {
+  it('treats throwing when() as non-match', () => {
+    const evaluator = new RuleEvaluator();
+    const rules = [
+      RuleBuilder.create({
+        name: 'Throws',
+        when: () => {
+          throw new Error('boom');
+        },
+        score: 100,
+      }),
+    ];
+
+    expect(evaluator.evaluate(rules, {})).toEqual([]);
   });
 });
 

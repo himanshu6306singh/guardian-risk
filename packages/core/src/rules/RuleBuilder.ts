@@ -1,6 +1,6 @@
 import type { CreateRuleInput, Rule } from '../types/rules.js';
 import type { SignalMap } from '../types/signals.js';
-import { generateId } from '../utils/validation.js';
+import { generateId, validateRuleInput } from '../utils/validation.js';
 
 /**
  * Builds immutable rule definitions with auto-generated IDs.
@@ -12,6 +12,8 @@ export class RuleBuilder {
   static create<TSignals extends SignalMap = SignalMap>(
     input: CreateRuleInput<TSignals>,
   ): Rule<TSignals> {
+    validateRuleInput(input as CreateRuleInput<SignalMap>);
+
     const rule: Rule<TSignals> = {
       id: generateId(),
       name: input.name,

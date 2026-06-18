@@ -26,4 +26,35 @@ describe('ScoreCalculator', () => {
 
     expect(calculator.calculate(matched)).toBe(20);
   });
+
+  it('clamps total score to a safe maximum', () => {
+    const matched: MatchedRule[] = Array.from({ length: 200 }, (_, i) => ({
+      id: String(i),
+      name: `Rule${i}`,
+      score: 10_000,
+      reason: 'High',
+    }));
+
+    expect(calculator.calculate(matched)).toBe(1_000_000);
+  });
+
+  it('clamps negative total score to a safe minimum', () => {
+    const matched: MatchedRule[] = Array.from({ length: 200 }, (_, i) => ({
+      id: String(i),
+      name: `Rule${i}`,
+      score: -10_000,
+      reason: 'Low',
+    }));
+
+    expect(calculator.calculate(matched)).toBe(-1_000_000);
+  });
+
+  it('returns zero when total is not finite', () => {
+    const matched: MatchedRule[] = [
+      { id: '1', name: 'A', score: Number.POSITIVE_INFINITY, reason: 'A' },
+      { id: '2', name: 'B', score: 1, reason: 'B' },
+    ];
+
+    expect(calculator.calculate(matched)).toBe(0);
+  });
 });

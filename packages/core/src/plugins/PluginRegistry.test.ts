@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Guardian } from '../engine/Guardian.js';
-import { PluginAlreadyInstalledError, PluginRegistry } from './PluginRegistry.js';
+import { PluginAlreadyInstalledError, PluginInstallError, PluginRegistry } from './PluginRegistry.js';
 import type { Plugin } from './Plugin.js';
 
 function createPlugin(
@@ -71,5 +71,36 @@ describe('PluginRegistry', () => {
     const report = guardian.analyze();
     expect(report.score).toBe(10);
     expect(report.matchedRules[0]?.name).toBe('FromPlugin');
+  });
+
+  it('throws PluginInstallError when install() fails and does not register plugin', () => {
+    const registry = new PluginRegistry();
+    const guardian = new Guardian();
+    const plugin: Plugin = {
+      name: 'broken-plugin',
+      install(): void {
+        throw new Error('install failed');
+      },
+    };
+
+    expect(() => registry.install(plugin, guardian)).toThrow(PluginInstallError);
+    expect(registry.has('broken-plugin')).toBe(false);
+  });
+
+  it('wraps non-Error install failures in PluginInstallError', () => {
+    const registry = new PluginRegistry();
+    const guardian = new Guardian();
+
+    expect(() =>
+      registry.install(
+        {
+          name: 'throws-string',
+          install(): void {
+            throw 'boom';
+          },
+        },
+        guardian,
+      ),
+    ).toThrow('Plugin "throws-string" failed to install: Unknown plugin install error');
   });
 });

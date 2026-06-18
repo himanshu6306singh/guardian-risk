@@ -16,7 +16,14 @@ export class RuleEvaluator {
     const matched: MatchedRule[] = [];
 
     for (const rule of rules) {
-      if (rule.when(signals)) {
+      let isMatched = false;
+      try {
+        isMatched = rule.when(signals);
+      } catch {
+        isMatched = false;
+      }
+
+      if (isMatched) {
         matched.push({
           id: rule.id,
           name: rule.name,

@@ -1,7 +1,7 @@
 {
   "name": "guardian-risk",
-  "version": "0.2.0",
-  "description": "Configurable risk decision engine using signals, rules, and scoring",
+  "version": "0.2.1",
+  "description": "Configurable risk decision engine using signals, rules, and scoring. Zero runtime dependencies.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -19,7 +19,14 @@
     }
   },
   "sideEffects": false,
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist/index.js",
+    "dist/index.cjs",
+    "dist/index.d.ts",
+    "dist/index.d.cts",
+    "README.md",
+    "LICENSE"
+  ],
   "engines": {
     "node": ">=20"
   },
@@ -40,6 +47,7 @@
     "security",
     "typescript"
   ],
+  "author": "himanshuusinghh",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -50,12 +58,16 @@
   "bugs": {
     "url": "https://github.com/himanshu6306singh/guardian-risk/issues"
   },
+  "security": "https://github.com/himanshu6306singh/guardian-risk/security/policy",
+  "funding": "https://github.com/sponsors/himanshu6306singh",
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "provenance": true
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^4.1.9",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "vitest": "^4.1.9"
   }
 }

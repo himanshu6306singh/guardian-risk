@@ -10,6 +10,7 @@ import type { Plugin } from '../plugins/Plugin.js';
 import type { CreateRuleInput } from '../types/rules.js';
 import type { GuardianConfig, RiskReport } from '../types/report.js';
 import type { SignalValue } from '../types/signals.js';
+import { validateRiskLevels } from '../utils/validation.js';
 
 /**
  * Fluent public API for risk analysis.
@@ -22,6 +23,9 @@ export class Guardian {
 
   constructor(config: GuardianConfig = {}) {
     const thresholds = config.levels ?? DEFAULT_RISK_LEVELS;
+    if (config.levels !== undefined) {
+      validateRiskLevels(config.levels);
+    }
     this.signalStore = new SignalStore();
 
     const deps: RiskEngineDependencies = {

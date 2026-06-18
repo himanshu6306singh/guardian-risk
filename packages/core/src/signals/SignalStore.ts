@@ -1,5 +1,6 @@
 import type { SignalMap, SignalValue } from '../types/signals.js';
-import { validateSignalValue } from '../utils/validation.js';
+import { MAX_SIGNALS } from '../constants/security.js';
+import { validateSignalKey, validateSignalValue } from '../utils/validation.js';
 
 /**
  * Stores and retrieves signal values for risk evaluation.
@@ -11,10 +12,16 @@ export class SignalStore {
    * Set a signal value. Overwrites any existing value for the key.
    */
   set(key: string, value: SignalValue): this {
+    validateSignalKey(key);
+
     if (!validateSignalValue(value)) {
       throw new TypeError(
         `Invalid signal value for "${key}": signals must be string, number, boolean, or null`,
       );
+    }
+
+    if (!this.signals.has(key) && this.signals.size >= MAX_SIGNALS) {
+      throw new RangeError(`Cannot exceed maximum of ${MAX_SIGNALS} signals`);
     }
 
     this.signals.set(key, value);
@@ -39,7 +46,7 @@ export class SignalStore {
    * Returns a frozen snapshot of all signals.
    */
   getAll(): SignalMap {
-    const snapshot: Record<string, SignalValue> = {};
+    const snapshot = Object.create(null) as Record<string, SignalValue>;
     for (const [key, value] of this.signals) {
       snapshot[key] = value;
     }

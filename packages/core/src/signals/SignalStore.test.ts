@@ -44,6 +44,27 @@ describe('SignalStore', () => {
     expect(() => store.set('bad', undefined as never)).toThrow(TypeError);
   });
 
+  it('rejects prototype pollution signal keys', () => {
+    const store = new SignalStore();
+    expect(() => store.set('__proto__', true)).toThrow(TypeError);
+    expect(() => store.set('constructor', true)).toThrow(TypeError);
+  });
+
+  it('rejects exceeding max signals', () => {
+    const store = new SignalStore();
+    for (let i = 0; i < 1000; i++) {
+      store.set(`key${i}`, i);
+    }
+    expect(() => store.set('overflow', 1)).toThrow(RangeError);
+  });
+
+  it('uses a prototype-null snapshot', () => {
+    const store = new SignalStore();
+    store.set('safe', 1);
+    const snapshot = store.getAll() as Record<string, unknown>;
+    expect(Object.getPrototypeOf(snapshot)).toBeNull();
+  });
+
   it('accepts null as a valid signal value', () => {
     const store = new SignalStore();
     store.set('nullable', null);

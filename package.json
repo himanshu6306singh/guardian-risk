@@ -17,17 +17,22 @@
     "publish:core": "pnpm --filter guardian-risk publish --access public",
     "publish:plugins": "pnpm --filter \"./packages/{express,browser,redis,vpn,logger}\" publish --access public",
     "publish:all": "pnpm publish:core && pnpm publish:plugins",
-    "prepublish:check": "pnpm test:coverage && pnpm build && pnpm lint && pnpm typecheck",
+    "prepublish:check": "pnpm audit --audit-level moderate && pnpm test:coverage && pnpm build && pnpm lint && pnpm typecheck",
     "format": "prettier --write ."
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
     "@types/node": "^25.9.3",
-    "@vitest/coverage-v8": "^2.1.8",
+    "@vitest/coverage-v8": "^4.1.9",
     "eslint": "^9.17.0",
     "prettier": "^3.4.2",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.18.1",
-    "vitest": "^2.1.8"
+    "vitest": "^4.1.9"
+  },
+  "pnpm": {
+    "overrides": {
+      "esbuild": ">=0.28.1"
+    }
   }
 }

@@ -1,5 +1,18 @@
 import type { Guardian } from '../engine/Guardian.js';
 import type { Plugin } from './Plugin.js';
+import { validatePlugin } from '../utils/validation.js';
+
+/**
+ * Thrown when a plugin's install() callback fails.
+ */
+export class PluginInstallError extends Error {
+  constructor(pluginName: string, cause: unknown) {
+    const message =
+      cause instanceof Error ? cause.message : 'Unknown plugin install error';
+    super(`Plugin "${pluginName}" failed to install: ${message}`);
+    this.name = 'PluginInstallError';
+  }
+}
 
 /**
  * Thrown when attempting to register a plugin that is already installed.
@@ -22,11 +35,18 @@ export class PluginRegistry {
    * Each plugin name may only be installed once per Guardian instance.
    */
   install(plugin: Plugin, guardian: Guardian): void {
+    validatePlugin(plugin);
+
     if (this.installed.has(plugin.name)) {
       throw new PluginAlreadyInstalledError(plugin.name);
     }
 
-    plugin.install(guardian);
+    try {
+      plugin.install(guardian);
+    } catch (error) {
+      throw new PluginInstallError(plugin.name, error);
+    }
+
     this.installed.add(plugin.name);
   }
 
