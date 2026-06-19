@@ -1,0 +1,21 @@
+{
+  "name": "guardian-example-express-api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx server.ts"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "guardian-risk": "workspace:*",
+    "guardian-risk-express": "workspace:*",
+    "guardian-risk-logger": "workspace:*",
+    "guardian-risk-redis": "workspace:*",
+    "guardian-risk-vpn": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

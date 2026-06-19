@@ -110,7 +110,7 @@ pnpm publish:core
 **GitHub Actions publish** — adds npm provenance automatically when you create a GitHub Release:
 
 1. Add `NPM_TOKEN` secret in repo Settings → Secrets
-2. Create release on GitHub (tag `v0.2.1`)
+2. Create release on GitHub (tag `v0.3.0`)
 3. Workflow `.github/workflows/release.yml` runs `publish --provenance`
 
 > Do **not** set `"provenance": true` in `package.json` — it breaks local `pnpm publish`.

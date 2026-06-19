@@ -21,6 +21,7 @@ export class RuleBuilder {
       when: input.when,
       ...(input.description !== undefined ? { description: input.description } : {}),
       ...(input.reason !== undefined ? { reason: input.reason } : {}),
+      ...(input.group !== undefined ? { group: input.group } : {}),
     };
 
     return rule;

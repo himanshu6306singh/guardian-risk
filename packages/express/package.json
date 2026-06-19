@@ -1,6 +1,6 @@
 {
   "name": "guardian-risk-express",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Express middleware plugin for guardian-risk — adds request signals",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -33,6 +33,7 @@
   "scripts": {
     "build": "tsup",
     "prepublishOnly": "pnpm run build",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "keywords": ["guardian-risk", "guardian-risk-express", "express", "middleware", "risk", "security"],
@@ -52,7 +53,7 @@
     "access": "public"
   },
   "peerDependencies": {
-    "guardian-risk": "^0.2.0",
+    "guardian-risk": "^0.3.0",
     "express": ">=4"
   },
   "peerDependenciesMeta": {
@@ -63,6 +64,7 @@
   "devDependencies": {
     "guardian-risk": "workspace:*",
     "tsup": "^8.3.5",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.9"
   }
 }

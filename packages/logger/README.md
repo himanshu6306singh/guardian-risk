@@ -6,9 +6,7 @@
 npm install guardian-risk guardian-risk-logger
 ```
 
-> **Stub package** — API may change before `1.0.0`.
-
-Audit logging for [guardian-risk](https://www.npmjs.com/package/guardian-risk). Records risk reports, matched rules, and scores for compliance and debugging.
+Audit logging for [guardian-risk](https://www.npmjs.com/package/guardian-risk) analysis results.
 
 ## What gets logged
 
@@ -16,43 +14,34 @@ Audit logging for [guardian-risk](https://www.npmjs.com/package/guardian-risk). 
 |-------|--------|
 | `score` | `report.score` |
 | `riskLevel` | `report.level` |
-| `matchedRules` | Count and details from `report.matchedRules` |
+| `matchedRules` | Rule names from `report.matchedRules` |
 | `reasons` | `report.reasons` |
-| `analyzedAt` | `report.analyzedAt` |
+| `context` | Sanitized request metadata (method, path, IP only) |
 
-## Usage (stub)
+## Production usage
 
 ```typescript
 import { Guardian } from 'guardian-risk';
-import { loggerPlugin, analyzeAndLog } from 'guardian-risk-logger';
-import { vpnPlugin } from 'guardian-risk-vpn';
+import { loggerPlugin } from 'guardian-risk-logger';
 
-const guardian = new Guardian()
+const template = new Guardian()
   .use(loggerPlugin({ level: 'info', minScore: 20 }))
-  .use(vpnPlugin());
+  .rule({ name: 'Bot', when: (s) => s.headlessUA === true, score: 30 });
 
-guardian.signal('vpn', true);
-
-const report = analyzeAndLog(guardian, { minScore: 0 });
+// Middleware runs analyzeAsync → afterAnalyze logs automatically
 ```
 
-## Custom sink
+## Security notes
 
-```typescript
-import { loggerPlugin, logReport, type LogSink } from 'guardian-risk-logger';
+- Request **headers are redacted** from log context — only method, path, and validated IP are kept.
+- Do not log raw cookies, auth tokens, or PII in custom sinks.
+- Use `minScore` to reduce noise in high-traffic apps.
 
-const sink: LogSink = {
-  write(entry) {
-    // Send to Datadog, CloudWatch, file, etc.
-    myAuditService.record(entry);
-  },
-};
+## API
 
-const guardian = new Guardian().use(loggerPlugin({ sink }));
-const report = guardian.analyze();
-logReport(report, { sink });
-```
+- `loggerPlugin(options)` — `afterAnalyze` auto-logging
+- `analyzeAndLog(guardian, options)` — one-shot analyze + log
+- `logReport(report, options)` — log an existing report
+- `LogSink` — custom destination (Datadog, CloudWatch, etc.)
 
-## Status
-
-Not yet published. Implementation in progress.
+See [SECURITY.md](../../SECURITY.md).

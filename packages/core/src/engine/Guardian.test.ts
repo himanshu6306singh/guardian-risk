@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { Guardian } from './Guardian.js';
 import { DEFAULT_RISK_LEVELS } from '../constants/defaults.js';
 import { PluginAlreadyInstalledError } from '../plugins/PluginRegistry.js';
@@ -134,5 +134,120 @@ describe('Guardian', () => {
 
     expect(guardian.getInstalledPlugins()).toEqual(['persistent-plugin']);
     expect(guardian.analyze().score).toBe(10);
+  });
+
+  it('runs beforeAnalyze hooks in analyzeAsync', async () => {
+    const guardian = new Guardian().beforeAnalyze(({ guardian: g, data }) => {
+      g.signal('fromHook', data as string);
+    });
+
+    guardian.rule({
+      name: 'HookSignal',
+      when: (s) => s.fromHook === 'ctx',
+      score: 12,
+    });
+
+    const report = await guardian.analyzeAsync('ctx');
+    expect(report.score).toBe(12);
+  });
+
+  it('runs afterAnalyze hooks in analyzeAsync', async () => {
+    const after = vi.fn();
+
+    const guardian = new Guardian()
+      .rule({ name: 'Always', when: () => true, score: 5 })
+      .afterAnalyze(after);
+
+    const report = await guardian.analyzeAsync();
+    expect(report.score).toBe(5);
+    expect(after).toHaveBeenCalledWith(
+      expect.objectContaining({ report: expect.objectContaining({ score: 5 }) }),
+    );
+  });
+
+  it('throws on analyze() when hooks are registered', () => {
+    const guardian = new Guardian().beforeAnalyze(() => {});
+
+    expect(() => guardian.analyze()).toThrow(/analyzeAsync/);
+  });
+
+  it('fork creates isolated signal stores for concurrent requests', async () => {
+    const template = new Guardian()
+      .rule({
+        name: 'HighBurst',
+        when: (s) => (s.requestsPerMinute as number) > 10,
+        score: 30,
+      });
+
+    const [a, b] = await Promise.all([
+      (async () => {
+        const g = template.fork();
+        g.signal('requestsPerMinute', 50);
+        return g.analyzeAsync();
+      })(),
+      (async () => {
+        const g = template.fork();
+        g.signal('requestsPerMinute', 1);
+        return g.analyzeAsync();
+      })(),
+    ]);
+
+    expect(a.score).toBe(30);
+    expect(b.score).toBe(0);
+  });
+
+  it('fork copies plugins and hooks', async () => {
+    const plugin: Plugin = {
+      name: 'fork-plugin',
+      install(guardian) {
+        guardian.rule({ name: 'FromPlugin', when: () => true, score: 7 });
+      },
+    };
+
+    const template = new Guardian()
+      .use(plugin)
+      .beforeAnalyze(({ guardian: g }) => {
+        g.signal('enriched', true);
+      })
+      .rule({ name: 'NeedsEnrichment', when: (s) => s.enriched === true, score: 3 });
+
+    const child = template.fork();
+    const report = await child.analyzeAsync();
+
+    expect(child.getInstalledPlugins()).toEqual(['fork-plugin']);
+    expect(report.score).toBe(10);
+  });
+
+  it('prevents rule registration during analyzeAsync', async () => {
+    const guardian = new Guardian().beforeAnalyze(({ guardian: g }) => {
+      expect(() => g.rule({ name: 'Late', when: () => true, score: 1 })).toThrow(
+        /analysis is in progress/,
+      );
+    });
+
+    await guardian.analyzeAsync();
+  });
+
+  it('reads signals via getSignal', () => {
+    const guardian = new Guardian().signal('clientIp', '203.0.113.10');
+    expect(guardian.getSignal('clientIp')).toBe('203.0.113.10');
+    expect(guardian.getSignal('missing')).toBeUndefined();
+  });
+
+  it('fork copies group caps and after hooks', async () => {
+    const afterSpy = vi.fn();
+    const parent = new Guardian()
+      .ruleGroup({
+        name: 'login',
+        maxScore: 30,
+        rules: [{ name: 'A', when: () => true, score: 50 }],
+      })
+      .afterAnalyze(afterSpy);
+
+    const child = parent.fork();
+    const report = await child.analyzeAsync();
+
+    expect(report.score).toBe(30);
+    expect(afterSpy).toHaveBeenCalledTimes(1);
   });
 });

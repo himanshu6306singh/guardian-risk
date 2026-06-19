@@ -94,7 +94,9 @@ guardian.getInstalledPlugins(); // ['guardian-risk-express']
 ### Plugin rules
 
 - Each plugin `name` can only be installed **once** per `Guardian` instance
-- Plugins may call `guardian.signal()` and `guardian.rule()` inside `install()`
+- Plugins may call `guardian.signal()`, `guardian.rule()`, and lifecycle hooks inside `install()`
+- Use `guardian.fork()` per HTTP request for safe concurrency
+- `guardian.analyzeAsync(req)` runs `beforeAnalyze` hooks (Express, Redis, VPN)
 - Plugins **never** change core engine logic
 - `guardian.reset()` clears signals only — rules and plugins persist
 
@@ -196,10 +198,13 @@ pnpm typecheck
 ## Examples
 
 - [`examples/bot-detection/`](examples/bot-detection/) — bot risk scoring with custom rules
+- [`examples/express-api/`](examples/express-api/) — Express middleware + full plugin stack
 
 ## Publishing
 
 See [PUBLISHING.md](PUBLISHING.md) for npm publish steps.
+
+See [MIGRATION.md](MIGRATION.md) when upgrading between major/minor versions.
 
 See [ECOSYSTEM.md](ECOSYSTEM.md) for how users discover and install all packages.
 

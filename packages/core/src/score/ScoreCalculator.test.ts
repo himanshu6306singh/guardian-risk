@@ -57,4 +57,15 @@ describe('ScoreCalculator', () => {
 
     expect(calculator.calculate(matched)).toBe(0);
   });
+
+  it('applies per-group score caps', () => {
+    const matched: MatchedRule[] = [
+      { id: '1', name: 'A', score: 30, reason: 'A', group: 'login' },
+      { id: '2', name: 'B', score: 30, reason: 'B', group: 'login' },
+      { id: '3', name: 'C', score: 10, reason: 'C' },
+    ];
+
+    const score = calculator.calculate(matched, [{ name: 'login', maxScore: 40 }]);
+    expect(score).toBe(50);
+  });
 });

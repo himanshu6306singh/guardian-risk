@@ -42,6 +42,8 @@ describe('SignalStore', () => {
     expect(() => store.set('bad', {} as never)).toThrow(TypeError);
     expect(() => store.set('bad', [] as never)).toThrow(TypeError);
     expect(() => store.set('bad', undefined as never)).toThrow(TypeError);
+    expect(() => store.set('bad', Number.NaN as never)).toThrow(TypeError);
+    expect(() => store.set('long', 'a'.repeat(5000) as never)).toThrow(TypeError);
   });
 
   it('rejects prototype pollution signal keys', () => {

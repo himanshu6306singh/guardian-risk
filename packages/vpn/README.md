@@ -6,44 +6,52 @@
 npm install guardian-risk guardian-risk-vpn
 ```
 
-> **Stub package** — API may change before `1.0.0`.
+VPN, proxy, hosting, and Tor detection for [guardian-risk](https://www.npmjs.com/package/guardian-risk).
 
-VPN, proxy, and Tor detection for [guardian-risk](https://www.npmjs.com/package/guardian-risk). Resolves client IP and adds network risk signals.
-
-## Planned signals
+## Signals
 
 | Signal | Description |
 |--------|-------------|
 | `vpn` | VPN exit node detected |
 | `proxy` | Public proxy detected |
 | `tor` | Tor exit node detected |
-| `country` | ISO country code from IP |
+| `hosting` | Datacenter / hosting ASN |
+| `country` | ISO country code from provider |
 | `asn` | Autonomous system number |
 
-## Usage (stub)
+## Production usage
 
 ```typescript
 import { Guardian } from 'guardian-risk';
-import { vpnPlugin, checkIp } from 'guardian-risk-vpn';
+import { vpnPlugin, StaticIpProvider } from 'guardian-risk-vpn';
 
-const guardian = new Guardian().use(
-  vpnPlugin({ provider: 'maxmind', vpnScore: 20, registerDefaultRules: true }),
+// Use your own IP intelligence — MaxMind, IPinfo, etc.
+const provider = new StaticIpProvider({
+  '203.0.113.10': { vpn: false, proxy: false, tor: false, country: 'US' },
+});
+
+const template = new Guardian().use(
+  vpnPlugin({
+    provider,
+    registerDefaultRules: true,
+    vpnScore: 20,
+  }),
 );
-
-await checkIp('203.0.113.10', guardian);
-const report = guardian.analyze();
 ```
 
-## Default rules (optional)
+For development only, `IpApiProvider` is available (HTTPS, 5s timeout) — **not recommended in production**.
 
-When `registerDefaultRules: true`, the plugin registers:
+## Security notes
 
-| Rule | Condition | Default score |
-|------|-----------|---------------|
-| VpnDetected | `vpn === true` | `vpnScore` (20) |
-| ProxyDetected | `proxy === true` | `vpnScore` (20) |
-| TorDetected | `tor === true` | `vpnScore + 10` (30) |
+- **No external provider by default** — you must supply `provider` for lookups.
+- Reads **`clientIp` from guardian signals first** (set by express plugin).
+- Only **validated public IPs** are looked up; private/reserved ranges are skipped.
+- VPN signals are **hints** — use your own threat intel feed in production.
 
-## Status
+## API
 
-Not yet published. Implementation in progress.
+- `vpnPlugin(options)` — `beforeAnalyze` hook + optional default rules
+- `checkIp(ip, guardian, options?)` — manual lookup
+- `StaticIpProvider`, `IpApiProvider` — built-in providers
+
+See [SECURITY.md](../../SECURITY.md).

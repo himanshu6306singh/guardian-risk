@@ -3,6 +3,7 @@ import {
   validateSignalValue,
   validateSignalKey,
   validateRuleInput,
+  validateRuleGroupInput,
   validatePlugin,
   validateRiskLevels,
 } from './validation.js';
@@ -24,6 +25,12 @@ describe('validateSignalValue', () => {
     expect(validateSignalValue({})).toBe(false);
     expect(validateSignalValue([])).toBe(false);
     expect(validateSignalValue(undefined)).toBe(false);
+  });
+
+  it('rejects non-finite numbers and oversized strings', () => {
+    expect(validateSignalValue(NaN)).toBe(false);
+    expect(validateSignalValue(Infinity)).toBe(false);
+    expect(validateSignalValue('a'.repeat(4097))).toBe(false);
   });
 });
 
@@ -92,6 +99,25 @@ describe('validateRuleInput', () => {
     ).toThrow(TypeError);
   });
 
+  it('rejects invalid rule groups on rules', () => {
+    expect(() =>
+      validateRuleInput({
+        name: 'x',
+        when: () => true,
+        score: 1,
+        group: '',
+      }),
+    ).toThrow(TypeError);
+    expect(() =>
+      validateRuleInput({
+        name: 'x',
+        when: () => true,
+        score: 1,
+        group: 'a'.repeat(300),
+      }),
+    ).toThrow(TypeError);
+  });
+
   it('rejects oversized rule names and descriptions', () => {
     expect(() =>
       validateRuleInput({
@@ -108,6 +134,28 @@ describe('validateRuleInput', () => {
         description: 'a'.repeat(300),
       }),
     ).toThrow(TypeError);
+  });
+});
+
+describe('validateRuleGroupInput', () => {
+  it('rejects invalid group definitions', () => {
+    expect(() =>
+      validateRuleGroupInput({ name: '', rules: [{ name: 'x', when: () => true, score: 1 }] }),
+    ).toThrow(TypeError);
+    expect(() =>
+      validateRuleGroupInput({
+        name: 'a'.repeat(300),
+        rules: [{ name: 'x', when: () => true, score: 1 }],
+      }),
+    ).toThrow(TypeError);
+    expect(() =>
+      validateRuleGroupInput({
+        name: 'g',
+        maxScore: -1,
+        rules: [{ name: 'x', when: () => true, score: 1 }],
+      }),
+    ).toThrow(TypeError);
+    expect(() => validateRuleGroupInput({ name: 'g', rules: [] })).toThrow(TypeError);
   });
 });
 

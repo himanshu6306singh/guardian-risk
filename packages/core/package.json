@@ -1,6 +1,6 @@
 {
   "name": "guardian-risk",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Configurable risk decision engine using signals, rules, and scoring. Zero runtime dependencies.",
   "type": "module",
   "main": "./dist/index.cjs",
