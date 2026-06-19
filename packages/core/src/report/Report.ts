@@ -19,11 +19,15 @@ export class ReportBuilder {
     const reasons = matchedRules.map((rule) => rule.reason);
     const level = resolveLevel(score, thresholds);
 
+    const frozenRules = matchedRules.map((rule) =>
+      Object.freeze({ ...rule }),
+    ) as MatchedRule[];
+
     const report: RiskReport = {
       score,
       level,
       reasons: Object.freeze([...reasons]),
-      matchedRules: Object.freeze([...matchedRules]),
+      matchedRules: Object.freeze(frozenRules),
       analyzedAt,
     };
 

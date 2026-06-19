@@ -3,8 +3,9 @@ import {
   BLOCKED_SIGNAL_KEYS,
   MAX_KEY_LENGTH,
   MAX_RULE_SCORE,
+  MAX_SIGNAL_STRING_LENGTH,
 } from '../constants/security.js';
-import type { CreateRuleInput } from '../types/rules.js';
+import type { CreateRuleInput, RuleGroupInput } from '../types/rules.js';
 import type { Plugin } from '../plugins/Plugin.js';
 import type { RiskLevelThreshold } from '../types/report.js';
 import type { SignalMap, SignalValue } from '../types/signals.js';
@@ -19,7 +20,13 @@ export function validateSignalValue(value: unknown): value is SignalValue {
   }
 
   const type = typeof value;
-  return type === 'string' || type === 'number' || type === 'boolean';
+  if (type === 'string') {
+    return (value as string).length <= MAX_SIGNAL_STRING_LENGTH;
+  }
+  if (type === 'number') {
+    return Number.isFinite(value);
+  }
+  return type === 'boolean';
 }
 
 /**
@@ -80,6 +87,15 @@ export function validateRuleInput(input: CreateRuleInput<SignalMap>): void {
       throw new TypeError(`Rule description exceeds maximum length of ${MAX_KEY_LENGTH}`);
     }
   }
+
+  if (input.group !== undefined) {
+    if (typeof input.group !== 'string' || input.group.trim().length === 0) {
+      throw new TypeError('Rule group must be a non-empty string');
+    }
+    if (input.group.length > MAX_KEY_LENGTH) {
+      throw new TypeError(`Rule group exceeds maximum length of ${MAX_KEY_LENGTH}`);
+    }
+  }
 }
 
 /**
@@ -115,6 +131,29 @@ export function validateRiskLevels(levels: readonly RiskLevelThreshold[]): void 
     if (typeof threshold.max !== 'number' || (!Number.isFinite(threshold.max) && threshold.max !== Infinity)) {
       throw new TypeError('Risk level max must be a finite number or Infinity');
     }
+  }
+}
+
+/**
+ * Validates rule group input before registration.
+ */
+export function validateRuleGroupInput(input: RuleGroupInput<SignalMap>): void {
+  if (typeof input.name !== 'string' || input.name.trim().length === 0) {
+    throw new TypeError('Rule group name must be a non-empty string');
+  }
+
+  if (input.name.length > MAX_KEY_LENGTH) {
+    throw new TypeError(`Rule group name exceeds maximum length of ${MAX_KEY_LENGTH}`);
+  }
+
+  if (input.maxScore !== undefined) {
+    if (typeof input.maxScore !== 'number' || !Number.isFinite(input.maxScore) || input.maxScore < 0) {
+      throw new TypeError('Rule group maxScore must be a non-negative finite number');
+    }
+  }
+
+  if (!Array.isArray(input.rules) || input.rules.length === 0) {
+    throw new TypeError('Rule group must contain at least one rule');
   }
 }
 

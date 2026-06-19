@@ -29,6 +29,7 @@ export class RuleEvaluator {
           name: rule.name,
           score: rule.score,
           reason: rule.reason ?? rule.name,
+          ...(rule.group !== undefined ? { group: rule.group } : {}),
         });
       }
     }

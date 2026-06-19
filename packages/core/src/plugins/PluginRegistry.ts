@@ -58,6 +58,16 @@ export class PluginRegistry {
   }
 
   /**
+   * Copy installed plugin names from a template (used by Guardian.fork).
+   * Does not call install() — rules and hooks are copied separately.
+   */
+  adoptInstalled(names: readonly string[]): void {
+    for (const name of names) {
+      this.installed.add(name);
+    }
+  }
+
+  /**
    * Get names of all installed plugins in registration order.
    */
   getInstalled(): readonly string[] {

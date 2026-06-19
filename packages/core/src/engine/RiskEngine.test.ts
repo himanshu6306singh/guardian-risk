@@ -92,4 +92,11 @@ describe('RiskEngine', () => {
       ),
     ).toThrow(RangeError);
   });
+
+  it('updates an existing group cap', () => {
+    const engine = createEngine();
+    engine.setGroupCap('login', 40);
+    engine.setGroupCap('login', 25);
+    expect(engine.getGroupCaps()).toEqual([{ name: 'login', maxScore: 25 }]);
+  });
 });

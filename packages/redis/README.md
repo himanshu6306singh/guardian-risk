@@ -4,35 +4,56 @@
 
 ```bash
 npm install guardian-risk guardian-risk-redis
+# optional peer for real Redis:
+npm install ioredis
 ```
 
-> **Stub package** — API may change before `1.0.0`.
+Session and rate-limit signals backed by Redis (or in-memory for development).
 
-Redis integration for [guardian-risk](https://www.npmjs.com/package/guardian-risk). Stores events and exposes session-based counters as signals.
-
-## Planned signals
+## Signals
 
 | Signal | Source |
 |--------|--------|
-| `requestsPerMinute` | Sliding window counter |
-| `sessionAge` | First-seen timestamp |
-| `failedLoginCount` | Incremented on auth failures |
-| `uniqueIpsPerSession` | HyperLogLog or set cardinality |
+| `sessionId` | Sanitized session header or `anonymous` |
+| `requestsInWindow` | Atomic counter in sliding window |
+| `requestsPerMinute` | Same as `requestsInWindow` (compat alias) |
+| `loginAttempts` | Incremented via `recordLoginAttempt()` |
+| `sessionAgeSeconds` | Age since session creation or window start |
+| `signalSource` | Always `'session'` |
 
-## Usage (stub)
+## Production usage
 
 ```typescript
 import { Guardian } from 'guardian-risk';
-import { redisPlugin, loadSessionSignals } from 'guardian-risk-redis';
+import { redisPlugin, recordLoginAttempt } from 'guardian-risk-redis';
 
-const guardian = new Guardian().use(
-  redisPlugin({ url: process.env.REDIS_URL, keyPrefix: 'app:risk:' }),
+const template = new Guardian().use(
+  redisPlugin({
+    url: process.env.REDIS_URL,
+    keyPrefix: 'myapp:risk:',
+    sessionIdHeader: 'x-session-id',
+    allowInMemoryFallback: false, // default — fail loud if Redis unavailable
+    rateLimitByIpWhenNoSession: true,
+  }),
 );
 
-await loadSessionSignals('session-123', guardian);
-const report = guardian.analyze();
+// On failed login:
+await recordLoginAttempt(sessionId, store);
 ```
 
-## Status
+## Security notes
 
-Not yet published. Implementation in progress.
+- **`x-session-id` is client-supplied** — bind it to your server session in production.
+- Session IDs are **sanitized** (length + charset); invalid IDs are ignored.
+- When no session is present, rate limiting falls back to **validated `clientIp`** (from express plugin).
+- **`allowInMemoryFallback` defaults to `false`** — `createRedisStore()` throws if `ioredis` is missing.
+- Do not use in-memory store in multi-instance deployments.
+
+## API
+
+- `redisPlugin(options)` — `beforeAnalyze` hook
+- `loadSessionSignals(sessionId, guardian, options)` — manual preload
+- `recordLoginAttempt(sessionId, store?)` — increment login counter
+- `createRedisStore({ url, keyPrefix, allowInMemoryFallback })` — standalone store
+
+See [SECURITY.md](../../SECURITY.md).

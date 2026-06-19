@@ -4,6 +4,42 @@ All notable changes to `guardian-risk` are documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.3.0] - 2026-06-18
+
+### Added
+
+- `beforeAnalyze` / `afterAnalyze` lifecycle hooks
+- `analyzeAsync(context?)` for async signal collection
+- `fork()` — per-request Guardian copies for concurrent HTTP workloads
+- `defineSignals<T>()` — typed signal keys and rule predicates
+- `ruleGroup({ name, maxScore, rules })` — cap combined group scores
+- `applyRules()`, `botDetectionRules`, `loginProtectionRules` presets
+- **guardian-risk-express** `0.2.0`: `fromRequest`, `guardianMiddleware`, `analyzeRequest`
+- **guardian-risk-redis** `0.2.0`: session counters, `RedisSessionStore`, `createRedisStore()` (ioredis optional)
+- **guardian-risk-vpn** `0.2.0`: `checkIp`, `StaticIpProvider`, `IpApiProvider` (dev only)
+- **guardian-risk-logger** `0.2.0`: auto-logging via `afterAnalyze` hook
+- **guardian-risk-browser** `0.2.0`: `BrowserCollector`, mouse linearity, pointer/touch activity
+- `examples/express-api/` — full Express middleware demo
+- `MIGRATION.md` upgrade guide
+
+### Security
+
+- Validate IP addresses; reject spoofed XFF values
+- Cap string signal length; reject `NaN`/`Infinity` numbers
+- Deep-freeze matched rules in reports
+- Lock rule/plugin registration during `analyzeAsync()`
+- Hook timeout (10s) per lifecycle hook
+- Express: fail-closed middleware, safe block responses, `>=` threshold
+- Redis: session ID sanitization, IP fallback rate limit, fail-loud Redis connect
+- VPN: reuse `clientIp` signal, HTTPS + timeout, no default external provider
+- Logger: redact request context in logs
+
+### Breaking
+
+- Plugins register hooks — use `analyzeAsync()` instead of `analyze()` when plugins are installed
+- `analyzeAndLog()` is async
+- Stub plugin signals removed; plugins set real signals (`clientIp`, `userAgent`, etc.)
+
 ## [0.2.1] - 2026-06-18
 
 ### Security
@@ -46,6 +82,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 - Configurable risk levels
 - Zero runtime dependencies
 
+[0.3.0]: https://github.com/himanshu6306singh/guardian-risk/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/himanshu6306singh/guardian-risk/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/himanshu6306singh/guardian-risk/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/himanshu6306singh/guardian-risk/releases/tag/v0.1.0

@@ -13,6 +13,18 @@ export const MAX_RULE_SCORE = 10_000;
 /** Maximum total score after summing matched rules (overflow / DoS protection). */
 export const MAX_TOTAL_SCORE = 1_000_000;
 
+/** Maximum length for string signal values. */
+export const MAX_SIGNAL_STRING_LENGTH = 4_096;
+
+/** Maximum length for session identifiers used by plugins. */
+export const MAX_SESSION_ID_LENGTH = 128;
+
+/** Allowed characters in session IDs. */
+export const SESSION_ID_PATTERN = /^[a-zA-Z0-9._-]+$/;
+
+/** Default timeout for analyze lifecycle hooks (ms). */
+export const HOOK_TIMEOUT_MS = 10_000;
+
 /** Keys blocked to prevent prototype pollution. */
 export const BLOCKED_SIGNAL_KEYS = new Set([
   '__proto__',

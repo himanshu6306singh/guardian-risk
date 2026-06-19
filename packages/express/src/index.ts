@@ -1,38 +1,44 @@
 import type { Plugin } from 'guardian-risk';
+import type { ExpressPluginOptions } from './request.js';
+import { expressBeforeAnalyze } from './request.js';
 
-/** Options for the Express plugin (stub). */
-export interface ExpressPluginOptions {
-  /** Trust X-Forwarded-* headers when reading client IP. */
-  readonly trustProxy?: boolean;
-}
+export type { ExpressRequestLike, ExpressPluginOptions } from './request.js';
+export { fromRequest, expressBeforeAnalyze, resolveClientIp } from './request.js';
+
+export type {
+  ExpressRequest,
+  ExpressResponse,
+  ExpressNextFunction,
+  ExpressRequestHandler,
+  GuardianMiddlewareOptions,
+  AnalyzeErrorPolicy,
+} from './middleware.js';
+export { analyzeRequest, guardianMiddleware } from './middleware.js';
+
+/** Options for the Express plugin. */
+export type ExpressPluginConfig = ExpressPluginOptions;
 
 /**
- * Express plugin for guardian-risk.
+ * Express plugin — registers a beforeAnalyze hook for request signal collection.
  *
- * @stub This plugin is a stub. Future versions will read Express requests
- * and add signals such as `clientIp`, `userAgent`, `requestMethod`, and
- * `requestsPerMinute`.
+ * Usage with middleware (recommended):
+ * ```typescript
+ * app.use(guardianMiddleware(template, { trustProxy: true }));
+ * ```
+ *
+ * Or manual:
+ * ```typescript
+ * const g = template.fork().use(expressPlugin({ trustProxy: true }));
+ * const report = await g.analyzeAsync(req);
+ * ```
  */
-export function expressPlugin(options: ExpressPluginOptions = {}): Plugin {
-  const { trustProxy = false } = options;
+export function expressPlugin(options: ExpressPluginConfig = {}): Plugin {
+  const hook = expressBeforeAnalyze(options);
 
   return {
     name: 'guardian-risk-express',
-    install(_guardian) {
-      void trustProxy;
-      // Stub: middleware will attach signals from req before analyze()
+    install(guardian) {
+      guardian.beforeAnalyze(hook);
     },
   };
-}
-
-/**
- * @stub Future middleware that enriches a Guardian instance from an Express request.
- */
-export function fromRequest(
-  _req: unknown,
-  guardian: import('guardian-risk').Guardian,
-): import('guardian-risk').Guardian {
-  return guardian
-    .signal('requestSource', 'express')
-    .signal('expressPlugin', 'stub');
 }

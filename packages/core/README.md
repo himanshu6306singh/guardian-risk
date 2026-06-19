@@ -53,17 +53,27 @@ npm install guardian-risk guardian-risk-express guardian-risk-vpn guardian-risk-
 ```
 
 ```typescript
+import express from 'express';
 import { Guardian } from 'guardian-risk';
-import { expressPlugin } from 'guardian-risk-express';
-import { vpnPlugin } from 'guardian-risk-vpn';
-import { loggerPlugin, analyzeAndLog } from 'guardian-risk-logger';
+import { expressPlugin, guardianMiddleware, type ExpressRequest } from 'guardian-risk-express';
+import { redisPlugin } from 'guardian-risk-redis';
+import { vpnPlugin, StaticIpProvider } from 'guardian-risk-vpn';
+import { loggerPlugin } from 'guardian-risk-logger';
 
-const guardian = new Guardian()
-  .use(expressPlugin())
-  .use(vpnPlugin())
-  .use(loggerPlugin());
+const app = express();
 
-analyzeAndLog(guardian);
+const riskTemplate = new Guardian()
+  .use(expressPlugin({ trustProxy: true }))
+  .use(redisPlugin())
+  .use(vpnPlugin({ provider: new StaticIpProvider({}) }))
+  .use(loggerPlugin())
+  .rule({ name: 'Burst', when: (s) => (s.requestsPerMinute as number) > 30, score: 40 });
+
+app.use(guardianMiddleware(riskTemplate, { blockAboveScore: 80 }));
+
+app.post('/login', (req: ExpressRequest, res) => {
+  res.json(req.riskReport);
+});
 ```
 
 > Plugin packages are early stubs — APIs may change before `1.0.0`.
@@ -83,6 +93,34 @@ const myPlugin: Plugin = {
 new Guardian().use(myPlugin);
 ```
 
+## Typed signals & presets (v0.3)
+
+```typescript
+import { defineSignals, applyRules, botDetectionRules } from 'guardian-risk';
+
+const bot = defineSignals<{ mouseLinearity: number; headlessUA: boolean }>();
+
+const guardian = applyRules(bot.create(), botDetectionRules)
+  .signal('mouseLinearity', 0.95)
+  .signal('headlessUA', true);
+
+const report = await guardian.analyzeAsync();
+```
+
+## Rule groups (v0.3)
+
+```typescript
+guardian.ruleGroup({
+  name: 'login',
+  maxScore: 40,
+  rules: [
+    { name: 'BruteForce', when: (s) => (s.loginAttempts as number) > 5, score: 45 },
+  ],
+});
+```
+
+See [MIGRATION.md](../../MIGRATION.md) when upgrading versions.
+
 ## API
 
 | Method | Description |
@@ -90,7 +128,11 @@ new Guardian().use(myPlugin);
 | `guardian.signal(key, value)` | Add a signal |
 | `guardian.rule({ name, when, score, reason? })` | Register a rule |
 | `guardian.use(plugin)` | Install a plugin (once per name) |
-| `guardian.analyze()` | Run evaluation, returns `RiskReport` |
+| `guardian.beforeAnalyze(hook)` | Run hook before evaluation (async OK) |
+| `guardian.afterAnalyze(hook)` | Run hook after report is built |
+| `guardian.analyze()` | Sync analysis (no hooks registered) |
+| `guardian.analyzeAsync(context?)` | Async analysis with lifecycle hooks |
+| `guardian.fork()` | Clone rules/plugins for per-request use |
 | `guardian.reset()` | Clear signals (rules + plugins persist) |
 | `guardian.getInstalledPlugins()` | List installed plugin names |
 

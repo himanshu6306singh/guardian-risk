@@ -14,16 +14,16 @@ export interface LogEntry {
   readonly message: string;
   readonly report: RiskReport;
   readonly timestamp: string;
+  readonly context?: unknown;
 }
 
-/** Options for the logger plugin (stub). */
+/** Options for the logger plugin. */
 export interface LoggerPluginOptions {
-  /** Minimum level to emit. */
   readonly level?: LogLevel;
-  /** Custom sink. Defaults to console. */
   readonly sink?: LogSink;
-  /** Log only when score exceeds this threshold. */
   readonly minScore?: number;
+  /** Include redacted request metadata in logs (default: true). */
+  readonly includeContext?: boolean;
 }
 
 const LEVEL_ORDER: Record<LogLevel, number> = {
@@ -42,39 +42,45 @@ const defaultSink: LogSink = {
       riskLevel: entry.report.level,
       matchedRules: entry.report.matchedRules.length,
       timestamp: entry.timestamp,
+      ...(entry.context !== undefined ? { context: entry.context } : {}),
     });
     console.log(`[guardian-risk] ${payload}`);
   },
 };
 
-/**
- * Logger plugin for guardian-risk.
- *
- * @stub Future versions will hook into analyze() automatically.
- * For now, use `logReport()` after `guardian.analyze()`.
- */
 export function loggerPlugin(options: LoggerPluginOptions = {}): Plugin {
-  const { level = 'info', sink = defaultSink, minScore = 0 } = options;
+  const resolved = {
+    level: 'info' as LogLevel,
+    sink: defaultSink,
+    minScore: 0,
+    includeContext: true,
+    ...options,
+  };
 
   return {
     name: 'guardian-risk-logger',
-    install(_guardian) {
-      void level;
-      void sink;
-      void minScore;
-      // Stub: will wrap analyze() and emit audit logs automatically
+    install(guardian) {
+      guardian.afterAnalyze(({ report, data }) => {
+        logReport(report, {
+          ...resolved,
+          context: resolved.includeContext ? sanitizeLogContext(data) : undefined,
+        });
+      });
     },
   };
 }
 
-/**
- * Log a risk report to the configured sink.
- */
 export function logReport(
   report: RiskReport,
-  options: LoggerPluginOptions = {},
+  options: LoggerPluginOptions & { context?: unknown } = {},
 ): void {
-  const { level = 'info', sink = defaultSink, minScore = 0 } = options;
+  const {
+    level = 'info',
+    sink = defaultSink,
+    minScore = 0,
+    context,
+    includeContext = true,
+  } = options;
 
   if (report.score < minScore) {
     return;
@@ -82,24 +88,50 @@ export function logReport(
 
   const entryLevel = resolveLogLevel(report, level);
 
+  if (!shouldLog(level, entryLevel)) {
+    return;
+  }
+
   sink.write({
     level: entryLevel,
-    message: `Risk analysis complete: ${report.level} (${report.score})`,
+    message: `Risk analysis: ${report.level} (score ${report.score})`,
     report,
     timestamp: new Date().toISOString(),
+    context: includeContext ? sanitizeLogContext(context) : undefined,
   });
 }
 
-/**
- * Analyze and log in one step.
- */
-export function analyzeAndLog(
+export async function analyzeAndLog(
   guardian: import('guardian-risk').Guardian,
+  context?: unknown,
   options: LoggerPluginOptions = {},
-): RiskReport {
-  const report = guardian.analyze();
-  logReport(report, options);
+): Promise<RiskReport> {
+  const report = await guardian.analyzeAsync(context);
+  logReport(report, { ...options, context });
   return report;
+}
+
+/** Redact sensitive request fields before logging. */
+export function sanitizeLogContext(context: unknown): unknown {
+  if (context === null || context === undefined) {
+    return undefined;
+  }
+
+  if (typeof context !== 'object') {
+    return undefined;
+  }
+
+  const record = context as Record<string, unknown>;
+  return {
+    method: typeof record.method === 'string' ? record.method : undefined,
+    path:
+      typeof record.path === 'string'
+        ? record.path
+        : typeof record.originalUrl === 'string'
+          ? record.originalUrl
+          : undefined,
+    ip: typeof record.ip === 'string' ? record.ip : undefined,
+  };
 }
 
 function resolveLogLevel(report: RiskReport, configured: LogLevel): LogLevel {

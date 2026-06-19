@@ -1,42 +1,24 @@
-import { Guardian } from 'guardian-risk';
+import { Guardian, defineSignals, applyRules, botDetectionRules } from 'guardian-risk';
 
 /**
- * Bot risk scoring example.
- *
- * Guardian does NOT detect bots. You define what "risky" means
- * by supplying signals and rules.
+ * Bot risk scoring example with typed signals and preset rules.
  */
-const guardian = new Guardian();
+const bot = defineSignals<{
+  mouseLinearity: number;
+  requestBurst: number;
+  headlessUA: boolean;
+  sessionAgeSeconds: number;
+  requestsPerMinute: number;
+}>();
+
+const guardian = applyRules(bot.create(), botDetectionRules);
 
 guardian
   .signal('mouseLinearity', 0.95)
   .signal('requestBurst', 120)
   .signal('headlessUA', true)
-  .signal('sessionAge', 3)
-  .rule({
-    name: 'LinearMouseMovement',
-    reason: 'Mouse movement is unnaturally linear',
-    when: (s) => (s.mouseLinearity as number) > 0.9,
-    score: 25,
-  })
-  .rule({
-    name: 'RequestBurst',
-    reason: 'Unusually high request rate in short window',
-    when: (s) => (s.requestBurst as number) > 50,
-    score: 30,
-  })
-  .rule({
-    name: 'HeadlessBrowser',
-    reason: 'User agent indicates headless browser',
-    when: (s) => s.headlessUA === true,
-    score: 40,
-  })
-  .rule({
-    name: 'NewSession',
-    reason: 'Session is very new',
-    when: (s) => (s.sessionAge as number) < 10,
-    score: 10,
-  });
+  .signal('sessionAgeSeconds', 3)
+  .signal('requestsPerMinute', 5);
 
 const report = guardian.analyze();
 

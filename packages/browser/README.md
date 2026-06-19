@@ -6,31 +6,44 @@
 npm install guardian-risk guardian-risk-browser
 ```
 
-> **Stub package** — API may change before `1.0.0`.
+Browser-side behavioral signal collection for [guardian-risk](https://www.npmjs.com/package/guardian-risk).
 
-Browser integration for [guardian-risk](https://www.npmjs.com/package/guardian-risk). Collects client-side behavioral and fingerprint signals.
-
-## Planned signals
+## Signals
 
 | Signal | Source |
 |--------|--------|
-| `mouseLinearity` | Mouse movement patterns |
-| `keystrokeInterval` | Typing rhythm |
-| `headlessUA` | User agent heuristics |
-| `canvasFingerprint` | Canvas hash |
+| `mouseLinearity` | Pointer movement linearity (0–1) |
+| `hasPointerActivity` | Mouse or touch activity detected |
+| `keystrokeCount` | Key events in sample window |
+| `headlessUA` | User-agent heuristics |
 
-## Usage (stub)
+## Usage
 
 ```typescript
 import { Guardian } from 'guardian-risk';
-import { browserPlugin, collectSignals } from 'guardian-risk-browser';
+import { browserPlugin, BrowserCollector } from 'guardian-risk-browser';
 
 const guardian = new Guardian().use(browserPlugin());
 
-collectSignals(guardian);
-const report = guardian.analyze();
+const collector = new BrowserCollector();
+const stop = collector.start();
+// ... user interacts ...
+collector.applyTo(guardian);
+stop();
 ```
 
-## Status
+## Security notes
 
-Not yet published. Implementation in progress.
+- **All browser signals are client-controlled** — attackers can spoof or omit them.
+- Use for **defense in depth** only; never as sole auth or blocking factor.
+- Pair with server-side signals (IP rate limits, session age, VPN checks).
+- Mobile users: `hasPointerActivity` includes touch events.
+
+## API
+
+- `browserPlugin()` — registers default behavioral rules
+- `BrowserCollector` — tracks pointer/keyboard activity
+- `collectSignals(guardian, options?)` — timed sampling helper
+- `computeMouseLinearity(points)` — standalone metric
+
+See [SECURITY.md](../../SECURITY.md).
