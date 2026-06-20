@@ -82,8 +82,8 @@ Old stubs set placeholder signals like `expressPlugin: 'stub'`. New plugins set 
 ```json
 {
   "dependencies": {
-    "guardian-risk": "^0.3.0",
-    "guardian-risk-express": "^0.2.0"
+    "guardian-risk": "^0.3.1",
+    "guardian-risk-express": "^0.2.1"
   },
   "optionalDependencies": {
     "ioredis": "^5"
@@ -161,6 +161,21 @@ stop();
 | **vpn** | No default external provider; reuses `clientIp` signal |
 | **logger** | Redacts headers from log context |
 | **browser** | Touch/pointer activity for mobile |
+
+---
+
+## Upgrading 0.3.0 → 0.3.1
+
+Documentation-only release. No code or API changes. Safe to upgrade without code changes.
+
+```json
+{
+  "dependencies": {
+    "guardian-risk": "^0.3.1",
+    "guardian-risk-express": "^0.2.1"
+  }
+}
+```
 
 ---
 
