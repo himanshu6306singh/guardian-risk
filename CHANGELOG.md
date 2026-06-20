@@ -4,6 +4,15 @@ All notable changes to `guardian-risk` are documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.3.1] - 2026-06-19
+
+### Changed
+
+- Documentation updated for production use — removed outdated "stub" labels
+- npm README: production checklist, hardened Express example, full plugin table
+- Root README and ECOSYSTEM aligned with published releases
+- Plugin packages `@0.2.1` — documentation sync only
+
 ## [0.3.0] - 2026-06-18
 
 ### Added
@@ -82,6 +91,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 - Configurable risk levels
 - Zero runtime dependencies
 
+[0.3.1]: https://github.com/himanshu6306singh/guardian-risk/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/himanshu6306singh/guardian-risk/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/himanshu6306singh/guardian-risk/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/himanshu6306singh/guardian-risk/compare/v0.1.0...v0.2.0

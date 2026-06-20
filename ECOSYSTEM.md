@@ -2,6 +2,19 @@
 
 How users find, install, and use all Guardian packages on npm.
 
+## Current versions (npm)
+
+| Package | Version | Status |
+|---------|---------|--------|
+| `guardian-risk` | `0.3.1` | Production-ready core |
+| `guardian-risk-express` | `0.2.1` | Production middleware |
+| `guardian-risk-redis` | `0.2.1` | Production session store |
+| `guardian-risk-vpn` | `0.2.1` | Production (bring your IP provider) |
+| `guardian-risk-browser` | `0.2.1` | Defense-in-depth client signals |
+| `guardian-risk-logger` | `0.2.1` | Production audit logging |
+
+---
+
 ## How npm works (important)
 
 **Each package = one npm page.** There is no single npm page that lists all your packages automatically.

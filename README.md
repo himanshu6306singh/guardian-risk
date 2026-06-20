@@ -1,12 +1,14 @@
 # Guardian
 
-**A configurable risk decision engine for TypeScript.**
+**A production-ready risk decision engine for TypeScript.**
 
 Guardian helps developers answer one question:
 
 > Based on my application's rules, how risky is this action?
 
 It is **not** a bot detection library. It is a composable engine — like Zod validates data and Prisma manages databases, Guardian evaluates risk.
+
+**Current release:** `guardian-risk@0.3.1` · plugins `@0.2.1`
 
 ## Use cases
 
@@ -22,12 +24,10 @@ It is **not** a bot detection library. It is a composable engine — like Zod va
 ## Install
 
 ```bash
-pnpm add guardian-risk
+npm install guardian-risk
 ```
 
-> **npm package name:** `guardian-risk`
-
-## Quick start
+## Quick start (core only)
 
 ```typescript
 import { Guardian } from 'guardian-risk';
@@ -52,172 +52,124 @@ const report = guardian.analyze();
 // { score: 35, level: 'MEDIUM', reasons: [...], matchedRules: [...] }
 ```
 
+## Production stack (Express)
+
+```bash
+npm install guardian-risk guardian-risk-express guardian-risk-redis guardian-risk-vpn guardian-risk-logger
+# optional: npm install ioredis
+```
+
+```typescript
+import express from 'express';
+import { Guardian } from 'guardian-risk';
+import { expressPlugin, guardianMiddleware } from 'guardian-risk-express';
+import { redisPlugin } from 'guardian-risk-redis';
+import { vpnPlugin, StaticIpProvider } from 'guardian-risk-vpn';
+import { loggerPlugin } from 'guardian-risk-logger';
+
+const app = express();
+app.set('trust proxy', 1);
+
+const template = new Guardian()
+  .use(expressPlugin({ trustProxy: true }))
+  .use(redisPlugin({ url: process.env.REDIS_URL, allowInMemoryFallback: false }))
+  .use(vpnPlugin({ provider: new StaticIpProvider({}), vpnScore: 25 }))
+  .use(loggerPlugin({ minScore: 20 }))
+  .rule({ name: 'Burst', when: (s) => (s.requestsInWindow as number) > 30, score: 40 });
+
+app.get('/health', (_req, res) => res.json({ ok: true }));
+
+app.use(
+  guardianMiddleware(template, {
+    blockAboveScore: 80,
+    onAnalyzeError: 'block',
+    exposeBlockDetails: false,
+  }),
+);
+```
+
+See [`examples/express-api/`](examples/express-api/) for a full production-oriented server.
+
 ## Core concepts
 
 | Concept | Description |
 |---------|-------------|
-| **Signals** | Input values (e.g. `emailVerified`, `postsPerMinute`) |
+| **Signals** | Input values (e.g. `clientIp`, `loginAttempts`) |
 | **Rules** | Conditions that add risk when matched |
 | **Engine** | Runs every rule against signals |
-| **Report** | Score, level, reasons, and matched rules |
-| **Plugins** | Extend Guardian with signals, rules, or integrations |
+| **Report** | Immutable score, level, reasons, matched rules |
+| **Plugins** | Load signals from HTTP, Redis, VPN, browser, logs |
 
-## Plugin system (v0.2)
+## Official plugins
 
-Plugins extend Guardian **without modifying core**. Each plugin implements:
+| Package | npm | Purpose |
+|---------|-----|---------|
+| [`guardian-risk`](packages/core) | [npm](https://www.npmjs.com/package/guardian-risk) | Core engine (required) |
+| [`guardian-risk-express`](packages/express) | [npm](https://www.npmjs.com/package/guardian-risk-express) | Express middleware + validated IP |
+| [`guardian-risk-redis`](packages/redis) | [npm](https://www.npmjs.com/package/guardian-risk-redis) | Session counters, rate limits |
+| [`guardian-risk-vpn`](packages/vpn) | [npm](https://www.npmjs.com/package/guardian-risk-vpn) | VPN / proxy / Tor signals |
+| [`guardian-risk-browser`](packages/browser) | [npm](https://www.npmjs.com/package/guardian-risk-browser) | Pointer, keyboard, UA signals |
+| [`guardian-risk-logger`](packages/logger) | [npm](https://www.npmjs.com/package/guardian-risk-logger) | Audit logging |
 
-```typescript
-interface Plugin {
-  name: string;
-  install(guardian: Guardian): void;
-}
-```
+All plugins are **production-ready** at `0.2.x` when used with the [production checklist](SECURITY.md#production-checklist).
 
-Register with the fluent API:
+## Plugin rules
 
-```typescript
-import { Guardian } from 'guardian-risk';
-import { expressPlugin } from 'guardian-risk-express';
+- Install each plugin **once** per `Guardian` template
+- Use `template.fork()` or `guardianMiddleware()` — **one fork per request**
+- Use `await guardian.analyzeAsync(req)` when plugins are installed
+- Rules and plugins are **trusted code** — never load from user JSON
+- `guardian.reset()` clears signals only; rules and plugins persist
 
-const guardian = new Guardian()
-  .use(expressPlugin({ trustProxy: true }))
-  .signal('loginAttempts', 5)
-  .rule({
-    name: 'BruteForce',
-    when: (s) => (s.loginAttempts as number) > 3,
-    score: 40,
-  });
+## Features (v0.3)
 
-guardian.getInstalledPlugins(); // ['guardian-risk-express']
-```
-
-### Plugin rules
-
-- Each plugin `name` can only be installed **once** per `Guardian` instance
-- Plugins may call `guardian.signal()`, `guardian.rule()`, and lifecycle hooks inside `install()`
-- Use `guardian.fork()` per HTTP request for safe concurrency
-- `guardian.analyzeAsync(req)` runs `beforeAnalyze` hooks (Express, Redis, VPN)
-- Plugins **never** change core engine logic
-- `guardian.reset()` clears signals only — rules and plugins persist
-
-### Official plugins (stubs)
-
-| Package | Status | Purpose |
-|---------|--------|---------|
-| [`guardian-risk`](packages/core) | Published | Core engine |
-| [`guardian-risk-express`](packages/express) | Stub | Express request signals |
-| [`guardian-risk-browser`](packages/browser) | Stub | Mouse, keyboard, fingerprint |
-| [`guardian-risk-redis`](packages/redis) | Stub | Session counters, rate limits |
-| [`guardian-risk-vpn`](packages/vpn) | Stub | VPN, proxy, Tor detection |
-| [`guardian-risk-logger`](packages/logger) | Stub | Audit logs for reports |
-
-### Plugin stack example
-
-```typescript
-import { Guardian } from 'guardian-risk';
-import { expressPlugin } from 'guardian-risk-express';
-import { vpnPlugin, checkIp } from 'guardian-risk-vpn';
-import { loggerPlugin, analyzeAndLog } from 'guardian-risk-logger';
-
-const guardian = new Guardian()
-  .use(expressPlugin({ trustProxy: true }))
-  .use(vpnPlugin({ vpnScore: 20 }))
-  .use(loggerPlugin({ level: 'info', minScore: 0 }));
-
-await checkIp('203.0.113.10', guardian);
-const report = analyzeAndLog(guardian);
-```
-
-### Custom plugin example
-
-```typescript
-import type { Plugin } from 'guardian-risk';
-
-const customPlugin: Plugin = {
-  name: 'my-custom-checks',
-  install(guardian) {
-    guardian.rule({
-      name: 'HighValueTransfer',
-      when: (s) => (s.amount as number) > 10_000,
-      score: 50,
-      reason: 'Transfer exceeds daily limit threshold',
-    });
-  },
-};
-
-new Guardian().use(customPlugin);
-```
-
-## Scoring
-
-Score is the **sum of all matched rule scores**. Risk levels are configurable:
-
-| Score | Default level |
-|-------|---------------|
-| 0–20 | LOW |
-| 21–40 | MEDIUM |
-| 41–60 | HIGH |
-| 61+ | CRITICAL |
-
-```typescript
-const guardian = new Guardian({
-  levels: [
-    { max: 20, level: 'LOW' },
-    { max: 40, level: 'MEDIUM' },
-    { max: 60, level: 'HIGH' },
-    { max: Infinity, level: 'CRITICAL' },
-  ],
-});
-```
+- **Lifecycle hooks** — `beforeAnalyze` / `afterAnalyze`
+- **Typed signals** — `defineSignals<T>()`
+- **Rule groups** — cap combined scores per group
+- **Presets** — `botDetectionRules`, `loginProtectionRules`
+- **Security** — zero deps, signal validation, hook timeouts, fail-closed middleware
 
 ## Monorepo structure
 
 ```
 guardian/
 ├── packages/
-│   ├── core/       → guardian-risk (npm)
-│   ├── express/    → guardian-risk-express (stub)
-│   ├── browser/    → guardian-risk-browser (stub)
-│   ├── redis/      → guardian-risk-redis (stub)
-│   ├── vpn/        → guardian-risk-vpn (stub)
-│   └── logger/     → guardian-risk-logger (stub)
+│   ├── core/       → guardian-risk
+│   ├── express/    → guardian-risk-express
+│   ├── browser/    → guardian-risk-browser
+│   ├── redis/      → guardian-risk-redis
+│   ├── vpn/        → guardian-risk-vpn
+│   └── logger/     → guardian-risk-logger
 └── examples/
-    └── bot-detection/
+    ├── bot-detection/
+    └── express-api/
 ```
 
 ## Development
 
 ```bash
 pnpm install
-pnpm build          # builds core + plugin stubs
-pnpm test           # core tests
-pnpm lint
-pnpm typecheck
+pnpm build
+pnpm test
+pnpm prepublish:check
 ```
 
-## Examples
+## Documentation
 
-- [`examples/bot-detection/`](examples/bot-detection/) — bot risk scoring with custom rules
-- [`examples/express-api/`](examples/express-api/) — Express middleware + full plugin stack
-
-## Publishing
-
-See [PUBLISHING.md](PUBLISHING.md) for npm publish steps.
-
-See [MIGRATION.md](MIGRATION.md) when upgrading between major/minor versions.
-
-See [ECOSYSTEM.md](ECOSYSTEM.md) for how users discover and install all packages.
+- [MIGRATION.md](MIGRATION.md) — upgrade guide (0.2.x → 0.3.x)
+- [SECURITY.md](SECURITY.md) — production checklist + vulnerability reporting
+- [ECOSYSTEM.md](ECOSYSTEM.md) — all npm packages
+- [PUBLISHING.md](PUBLISHING.md) — release steps
+- [CHANGELOG.md](CHANGELOG.md) — version history
 
 ## Security
 
-- **Zero runtime dependencies** — nothing installed with the package
-- **No install scripts** — no code runs on `npm install`
-- Prototype pollution protection on signal keys
-- Rule `when()` and plugin `install()` errors isolated
-- Score bounds and resource limits (see [SECURITY.md](SECURITY.md))
-- CI runs `pnpm audit` on every push; Dependabot enabled
+- **Zero runtime dependencies** (core)
+- **No install scripts**
+- Validated signals, prototype pollution guards, score bounds
+- See [SECURITY.md](SECURITY.md)
 
-Report vulnerabilities privately via [GitHub Security Advisories](https://github.com/himanshu6306singh/guardian-risk/security/advisories/new).
+Report vulnerabilities via [GitHub Security Advisories](https://github.com/himanshu6306singh/guardian-risk/security/advisories/new).
 
 ## License
 
